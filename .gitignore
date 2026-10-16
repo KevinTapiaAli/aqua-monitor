@@ -1,0 +1,17 @@
+node_modules/
+.npm-cache/
+.local-run/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+.env*
+!.env.example
+.vercel/
+firmware/config.py
+firmware/certs/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
