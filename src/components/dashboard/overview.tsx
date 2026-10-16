@@ -1,16 +1,18 @@
 "use client";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { ArrowUpRight, Bell, Radio, RefreshCw } from "lucide-react";
 import { useDevices } from "@/components/layout/device-provider";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MetricCard } from "./metric-card";
-import { ChartPanel } from "@/components/charts/chart-panel";
 import { useLiveMeasurements } from "@/hooks/use-live-measurements";
 import { parameters, type Device } from "@/types/domain";
 import { deviceStatus, statusLabels } from "@/lib/utils/device-status";
 import { formatDate } from "@/lib/utils/format";
 import { parameterInfo } from "@/config/parameters";
+
+const LiveSensorChart = dynamic(() => import("@/components/charts/live-sensor-chart"), { ssr: false, loading: () => <div className="panel flex h-96 items-center justify-center text-sm muted">Cargando monitor…</div> });
 
 export function Overview() {
   const { device } = useDevices();
@@ -41,8 +43,8 @@ function StationOverview({ initialDevice }: { initialDevice: Device }) {
     {latest?.measured_at && live.now - Date.parse(latest.measured_at) > Math.max(30, live.device.expected_interval_seconds * 3) * 1000 && <p className="message">La última muestra fue adquirida hace más tiempo que el intervalo esperado. Puede ser una lectura pendiente transmitida después de una desconexión.</p>}
     {status !== "online" && latest && <p className="message">Estos indicadores corresponden a la última lectura almacenada. El dispositivo no está transmitiendo recientemente.</p>}
     {!live.loading && !latest && <p className="message">Aún no hay lecturas. La estación aparecerá conectada cuando la API reciba datos válidos.</p>}
-    <div className="flex items-end justify-between gap-4"><div><h2 className="text-lg font-semibold">Evolución de los parámetros</h2><p className="mt-1 text-xs muted">Ventana de las últimas 120 recepciones</p></div><Link href="/dashboard/history" className="flex items-center gap-1 text-xs font-semibold text-cyan-800">Ver historial <ArrowUpRight size={14} /></Link></div>
-    <div className="grid gap-5 xl:grid-cols-2">{parameters.map((p) => <ChartPanel key={p} parameter={p} rows={live.rows} />)}</div>
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-lg font-semibold">Señales en tiempo real</h2><p className="mt-1 text-xs muted">El trazado avanza con cada lectura recibida · Hasta 120 registros · Intervalo esperado: {live.device.expected_interval_seconds} s</p></div><Link href="/dashboard/history" className="flex items-center gap-1 text-xs font-semibold text-cyan-800">Ver historial <ArrowUpRight size={14} /></Link></div>
+    <div className="grid gap-5 xl:grid-cols-2">{parameters.map((p) => <LiveSensorChart key={p} parameter={p} rows={live.rows} intervalSeconds={live.device.expected_interval_seconds} connected={status === "online" && live.connection === "En vivo"} />)}</div>
     <section className="panel"><div className="mb-5 flex flex-wrap items-center gap-2"><Bell size={18} className="text-cyan-700" aria-hidden="true" /><h2 className="font-semibold">Alertas pendientes</h2><span className="badge">{live.alerts.length}{live.alerts.length === 50 ? "+" : ""}</span><button className="btn btn-secondary ml-auto" onClick={live.retry} disabled={live.loading}>Actualizar pendientes</button></div>
       {actionError && <p role="alert" className="message message-error mb-4">{actionError}</p>}
       {!live.alerts.length ? <p className="text-sm muted">No hay eventos pendientes en la consulta actual. Configura umbrales para recibir advertencias; su ausencia no certifica la calidad del agua.</p> : <ul className="divide-y divide-slate-100">{live.alerts.map((alert) => <li key={alert.id} className="flex flex-wrap items-center justify-between gap-3 py-4"><div><p className="text-sm font-semibold">{parameterInfo[alert.parameter].label} <span className="ml-2 badge badge-warn">{alert.kind === "threshold" ? "Umbral" : "Sensor"}</span></p><p className="mt-1 text-sm muted">{alert.message}</p><p className="mt-1 text-xs muted">{formatDate(alert.created_at)}</p></div>{live.device.owner_id === userId && <button className="btn btn-secondary" disabled={Boolean(busyId)} onClick={() => void acknowledge(alert.id)}>Reconocer</button>}</li>)}</ul>}
