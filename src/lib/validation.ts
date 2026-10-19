@@ -15,8 +15,44 @@ export const ingestSchema = z.strictObject({
   gas_adc: finite.int().min(0).max(65535).nullable(),
   light_adc: finite.int().min(0).max(65535).nullable(),
   quality: z.strictObject({ soil_adc: qualityStatus, temperature_c: qualityStatus, gas_adc: qualityStatus, light_adc: qualityStatus }),
-  raw: z.partialRecord(z.enum(parameters), rawReading),
+  raw: z.record(z.string(), rawReading),
 }).superRefine((data, ctx) => {
+  
+  // Permitir los sensores originales y el LDR digital.
+  const allowedRaw = new Set<string>([
+    ...parameters,
+    "light_digital",
+  ]);
+
+  for (const key of Object.keys(data.raw)) {
+    if (!allowedRaw.has(key)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["raw", key],
+        message: "Parametro original no permitido.",
+      });
+    }
+  }
+
+  // LDR digital: solamente 0, 1 o null.
+  const digital = data.raw["light_digital"];
+
+  if (digital) {
+    if (
+      digital.unit !== "state" ||
+      (digital.value !== null &&
+        digital.value !== 0 &&
+        digital.value !== 1)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["raw", "light_digital"],
+        message:
+          "El LDR digital requiere estado 0, 1 o null y unidad state.",
+      });
+    }
+  }
+
   if (data.measured_at && (Date.parse(data.measured_at) > Date.now() + 300_000 || Date.parse(data.measured_at) < Date.UTC(2020, 0, 1))) {
     ctx.addIssue({ code: "custom", path: ["measured_at"], message: "Reloj inválido: envía null si no está sincronizado." });
   }

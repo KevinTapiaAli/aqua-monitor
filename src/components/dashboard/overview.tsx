@@ -1,3 +1,4 @@
+import { LdrDigitalPanel } from "@/components/dashboard/ldr-digital-panel";
 "use client";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -55,6 +56,9 @@ function StationOverview({ initialDevice }: { initialDevice: Device }) {
     {latest?.measured_at && live.now - Date.parse(latest.measured_at) > Math.max(30, live.device.expected_interval_seconds * 3) * 1000 && <p className="message">La última muestra fue adquirida hace más tiempo que el intervalo esperado. Puede ser una lectura pendiente transmitida después de una desconexión.</p>}
     {status !== "online" && latest && <p className="message">Estos indicadores corresponden a la última lectura almacenada. El dispositivo no está transmitiendo recientemente.</p>}
     {!live.loading && !latest && <p className="message">Aún no hay lecturas. La estación aparecerá conectada cuando la API reciba datos válidos.</p>}
+    {parameter === "light_adc" && (
+  <LdrDigitalPanel rows={live.rows} />
+)}
     <LiveSensorChart key={parameter} parameter={parameter} rows={live.rows} rules={live.rules} intervalSeconds={live.device.expected_interval_seconds} connected={status === "online" && live.connection === "En vivo"} />
     <section className="panel"><div className="mb-5 flex flex-wrap items-center gap-2"><Bell size={18} className="text-cyan-700" aria-hidden="true" /><h2 className="font-semibold">Alertas de {parameterInfo[parameter].label.toLowerCase()}</h2><span className="badge">{sensorAlerts.length}</span><button className="btn btn-secondary ml-auto" onClick={live.retry} disabled={live.loading}>Actualizar pendientes</button></div>
       {actionError && <p role="alert" className="message message-error mb-4">{actionError}</p>}
