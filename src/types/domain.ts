@@ -1,9 +1,8 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
-export const parameters = ["ph", "temperature_c", "turbidity_value", "ec_us_cm"] as const;
+export const parameters = ["temperature_c", "soil_adc", "gas_adc", "light_adc"] as const;
 export type Parameter = typeof parameters[number];
 export type QualityStatus = "ok" | "uncalibrated" | "out_of_range" | "sensor_error" | "missing";
 export type Quality = Record<Parameter, QualityStatus>;
-export type TurbidityUnit = "NTU" | "V" | "ADC";
 export type SensorLimits = Partial<Record<Parameter, { min: number; max: number; unit: string; reference: string }>>;
 
 export type Device = {
@@ -21,11 +20,10 @@ export type Measurement = {
   id: string;
   device_id: string;
   reading_id: string;
-  ph: number | null;
+  soil_adc: number | null;
   temperature_c: number | null;
-  turbidity_value: number | null;
-  turbidity_unit: TurbidityUnit | null;
-  ec_us_cm: number | null;
+  gas_adc: number | null;
+  light_adc: number | null;
   measured_at: string | null;
   received_at: string;
   created_at: string;

@@ -10,12 +10,11 @@ const rawReading = z.strictObject({ value: finite.nullable(), unit: z.string().t
 export const ingestSchema = z.strictObject({
   reading_id: uuidSchema,
   measured_at: timestamp.nullable(),
-  ph: finite.nullable(),
+  soil_adc: finite.int().min(0).max(65535).nullable(),
   temperature_c: finite.min(-273.15).nullable(),
-  turbidity_value: finite.min(0).nullable(),
-  turbidity_unit: z.enum(["NTU", "V", "ADC"]).nullable(),
-  ec_us_cm: finite.min(0).nullable(),
-  quality: z.strictObject({ ph: qualityStatus, temperature_c: qualityStatus, turbidity_value: qualityStatus, ec_us_cm: qualityStatus }),
+  gas_adc: finite.int().min(0).max(65535).nullable(),
+  light_adc: finite.int().min(0).max(65535).nullable(),
+  quality: z.strictObject({ soil_adc: qualityStatus, temperature_c: qualityStatus, gas_adc: qualityStatus, light_adc: qualityStatus }),
   raw: z.partialRecord(z.enum(parameters), rawReading),
 }).superRefine((data, ctx) => {
   if (data.measured_at && (Date.parse(data.measured_at) > Date.now() + 300_000 || Date.parse(data.measured_at) < Date.UTC(2020, 0, 1))) {
@@ -27,18 +26,18 @@ export const ingestSchema = z.strictObject({
     if ((state === "ok" || state === "out_of_range") && value === null) {
       ctx.addIssue({ code: "custom", path: [key], message: "Este estado requiere un valor numérico." });
     }
-    if ((state === "missing" || state === "sensor_error" || (state === "uncalibrated" && key !== "turbidity_value")) && value !== null) {
+    if ((state === "missing" || state === "sensor_error" || state === "uncalibrated") && value !== null) {
       ctx.addIssue({ code: "custom", path: [key], message: "Utiliza null y conserva la lectura original en raw." });
     }
   }
-  if ((data.turbidity_value === null) !== (data.turbidity_unit === null)) {
-    ctx.addIssue({ code: "custom", path: ["turbidity_unit"], message: "Valor y unidad deben estar presentes juntos." });
-  }
-  if (data.turbidity_value !== null) {
-    const calibrated = ["ok", "out_of_range"].includes(data.quality.turbidity_value);
-    if ((calibrated && data.turbidity_unit !== "NTU") || (!calibrated && data.turbidity_unit === "NTU")) {
-      ctx.addIssue({ code: "custom", path: ["turbidity_unit"], message: "NTU requiere una conversión válida; usa V o ADC para datos sin calibrar." });
+  for (const key of parameters) {
+    const raw = data.raw[key];
+    const unit = { temperature_c: "°C", soil_adc: "ADC", gas_adc: "ADC", light_adc: "ADC" }[key];
+    if (raw && raw.unit !== unit) ctx.addIssue({ code: "custom", path: ["raw", key, "unit"], message: "Unidad original incompatible." });
+    if (raw?.value != null && ((key === "temperature_c" && raw.value < -273.15) || (key !== "temperature_c" && (!Number.isInteger(raw.value) || raw.value < 0 || raw.value > 65535)))) {
+      ctx.addIssue({ code: "custom", path: ["raw", key, "value"], message: "Lectura original fuera del dominio permitido." });
     }
+    if (data.quality[key] === "uncalibrated" && raw?.value == null) ctx.addIssue({ code: "custom", path: ["raw", key], message: "Conserva el valor original sin calibrar." });
   }
 });
 
@@ -50,7 +49,7 @@ export const deviceSchema = z.strictObject({
 const limitSchema = z.strictObject({ min: finite, max: finite, unit: z.string().max(16), reference: z.string().trim().min(3).max(300) })
   .refine((v) => v.min < v.max, "El mínimo debe ser menor que el máximo.");
 export const sensorLimitsSchema = z.partialRecord(z.enum(parameters), limitSchema).superRefine((limits, ctx) => {
-  const units = { ph: ["pH"], temperature_c: ["°C"], turbidity_value: ["NTU", "V", "ADC"], ec_us_cm: ["µS/cm"] };
+  const units = { soil_adc: ["ADC"], temperature_c: ["°C"], gas_adc: ["ADC"], light_adc: ["ADC"] };
   for (const key of parameters) {
     if (limits[key] && !units[key].includes(limits[key].unit)) ctx.addIssue({ code: "custom", path: [key, "unit"], message: "Unidad incompatible." });
   }

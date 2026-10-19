@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Aqua Monitor", template: "%s · Aqua Monitor" },
-  description: "Sistema IoT multiparamétrico para el monitoreo de la calidad del agua.",
+  description: "Sistema IoT multiparamétrico para el monitoreo de la condiciones ambientales.",
   robots: { index: false, follow: false },
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

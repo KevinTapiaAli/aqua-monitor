@@ -49,7 +49,7 @@ Como administrador, agrega B a `device_users` de D con rol `viewer` para comprob
 | JSON inválido / tipo MIME incorrecto | 400 / 415 |
 | Campo ausente / cadena en lugar de número / NaN | 422 o 400 si no es JSON válido |
 | Valor NULL con quality missing | Conserva ausencia, no cero |
-| NTU sin conversión o raw con unidad inválida | 422 según contrato |
+| ADC fraccionario/fuera de 0–65535 o raw con unidad inválida | 422 según contrato |
 | Valor fuera del rango instrumental documentado | 422; no inserta |
 | Calidad sensor_error / out_of_range compatible | Evento por sensor en la misma transacción |
 | Umbral configurado superado por lectura ok | Alerta con valor, unidad y límites |
@@ -66,7 +66,7 @@ Para solicitudes web manuales de escritura, incluye la sesión y `Origin` igual 
 - Enviar una lectura pendiente antigua: hora de adquisición distinta de recepción y aviso de antigüedad.
 - Desconectar/reconectar Realtime: estado de reconexión y recuperación de la ventana sin duplicados; cambiar de dispositivo no mezcla series.
 - Error de sensor: tarjeta explícita, hueco en gráfico y evento; raw accesible en historial.
-- Mezclar turbidez V y NTU en periodos diferentes: gráfico separa unidades; promedios físicos excluyen V/ADC.
+- Confirmar que temperatura usa °C y los otros tres sensores ADC; los originales sin calibrar se ven en el dashboard y no se mezclan con estadísticas de lecturas válidas del historial.
 - Filtrar, cargar páginas y comparar fronteras: sin repeticiones ni pérdidas por empate de timestamp.
 - Estadísticas: coinciden con lecturas `ok` cargadas, no con un total de periodo no descargado.
 - CSV: columnas de calidad/raw, codificación UTF-8, fechas UTC; periodo grande informa límite y no descarga un archivo incompleto.

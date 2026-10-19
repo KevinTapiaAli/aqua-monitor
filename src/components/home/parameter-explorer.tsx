@@ -1,13 +1,13 @@
 "use client";
 import { useId, useState } from "react";
-import { ArrowUpRight, Droplet, FlaskConical, Thermometer, Waves, Zap } from "lucide-react";
+import { ArrowUpRight, Droplet, Thermometer, Wind, Sun } from "lucide-react";
 import Link from "next/link";
 
 const variables = [
-  { key: "ph", label: "pH", unit: "Escala de pH", icon: FlaskConical, title: "Acidez y alcalinidad", text: "Observa cómo cambia el pH del agua y relaciona su evolución con las condiciones de tu punto de monitoreo.", context: "La lectura necesita una sonda identificada y una calibración documentada.", color: "#0e7490" },
-  { key: "temperature", label: "Temperatura", unit: "Grados Celsius · °C", icon: Thermometer, title: "El contexto térmico del agua", text: "Sigue los cambios de temperatura a lo largo del tiempo y compáralos con el comportamiento de los otros parámetros.", context: "Cada lectura se conserva en grados Celsius, junto a su estado de calidad.", color: "#b45309" },
-  { key: "turbidity", label: "Turbidez", unit: "NTU, V o ADC · según calibración", icon: Waves, title: "Una mirada a las partículas", text: "Registra la respuesta del sensor de turbidez sin perder de vista qué unidad y calibración respaldan el dato.", context: "Solo se muestran NTU cuando la calibración lo permite. Las lecturas sin calibrar se distinguen claramente.", color: "#6d28d9" },
-  { key: "ec", label: "Conductividad", unit: "Microsiemens por centímetro · µS/cm", icon: Zap, title: "La respuesta de los iones disueltos", text: "Consulta la conductividad eléctrica y su evolución para estudiar variaciones en el agua de tu estación.", context: "Los límites y la calibración dependen del sensor y del contexto de estudio.", color: "#047857" },
+  { key: "temperature", label: "Temperatura", unit: "Grados Celsius · °C", icon: Thermometer, title: "Evolución de la temperatura", text: "Sigue las lecturas de tu DS18B20 y observa sus cambios en tiempo real.", context: "La lectura original se conserva aunque aún no se haya verificado la calibración.", color: "#b45309" },
+  { key: "humidity", label: "Humedad del suelo", unit: "Lectura analógica · ADC", icon: Droplet, title: "Respuesta de humedad del suelo", text: "Integra la salida analógica de un módulo de suelo tipo YL-69 y sigue sus cambios.", context: "No se muestra un porcentaje: primero hay que caracterizar la sonda y el suelo.", color: "#0e7490" },
+  { key: "gas", label: "Gas · MQ-135", unit: "Lectura analógica · ADC", icon: Wind, title: "Respuesta del sensor de gas", text: "Observa cambios en la respuesta analógica del MQ-135, conservando sus datos originales.", context: "No representa CO₂ en ppm ni una certificación de calidad del aire.", color: "#6d28d9" },
+  { key: "light", label: "Luz · LDR", unit: "Lectura analógica · ADC", icon: Sun, title: "Variaciones de iluminación", text: "Compara la respuesta del LDR ante cambios de luz en el entorno.", context: "La lectura no está expresada en lux y depende del divisor o módulo utilizado.", color: "#047857" },
 ];
 export function ParameterExplorer() {
   const [selected, setSelected] = useState(0);
@@ -15,7 +15,7 @@ export function ParameterExplorer() {
   const current = variables[selected];
   const Icon = current.icon;
   return <div className="grid gap-6 lg:grid-cols-[.8fr_1.4fr]">
-    <div role="tablist" aria-label="Parámetros del agua" aria-orientation="vertical" className="grid gap-2 self-start">
+    <div role="tablist" aria-label="Sensores ambientales" aria-orientation="vertical" className="grid gap-2 self-start">
       {variables.map(({ key, label, icon: ItemIcon }, index) => <button key={key} id={prefix + key} role="tab" type="button" aria-selected={selected === index} aria-controls={prefix + "-panel"} tabIndex={selected === index ? 0 : -1} onClick={() => setSelected(index)} onKeyDown={(event) => {
         let next = index;
         if (event.key === "ArrowDown") next = (index + 1) % variables.length;

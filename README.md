@@ -1,14 +1,14 @@
 # Aqua Monitor
 
-Sistema IoT Multiparamétrico para el Monitoreo en Tiempo Real de la Calidad del Agua.
+Sistema IoT de monitoreo ambiental: temperatura, humedad del suelo, gas MQ-135 y luz LDR.
 
-Aplicación Next.js con Supabase Auth, PostgreSQL/RLS, API REST para ESP32 y dashboard en español. El firmware físico se integra mediante un adaptador: no se han supuesto sensores, GPIO, voltajes ni fórmulas.
+Aplicación Next.js con Supabase Auth, PostgreSQL/RLS, API REST para ESP32 y dashboard en español. Temperatura DS18B20 integrada; entradas analógicas opcionales preparadas sin asignar conexiones desconocidas.
 
 ## Estado de esta entrega
 
-Código implementado para autenticación, dispositivos, ingesta, alertas, historial, gráficos, CSV y configuración. Incluye migraciones y módulos de comunicación MicroPython. A petición del usuario se instalaron las dependencias, se inició el servidor local y se habilitó Swagger. La revisión TypeScript (`npm run typecheck`) pasó y las rutas web, Swagger, OpenAPI y sus recursos respondieron HTTP 200.
+El usuario confirmó lecturas reales de temperatura, HTTP 201 y visualización en Vercel. El cambio ambiental del 19/10 está preparado localmente: interfaz, API, firmware y nueva migración. Falta aplicar esa migración, publicar y actualizar la placa. No se ejecutaron pruebas ni builds para este cambio.
 
-No se provisionó Supabase ni se publicó la aplicación. Siguen pendientes las verificaciones de autenticación/base de datos, interacción en navegador y circuito físico. No se ejecutó una compilación de producción ni suites de pruebas.
+Sigue primero la sección **Actualización a sensores ambientales** de [docs/SETUP.md](docs/SETUP.md).
 
 ## Acceso local
 
@@ -21,7 +21,7 @@ Con el servidor activo en el puerto 3000:
 
 Para volver a iniciarlo después de cerrar el proceso, ejecuta `npm run dev -- --hostname 127.0.0.1 --port 3000`. Son direcciones locales de este equipo, no un despliegue público.
 
-La integración física queda pendiente del código MicroPython, modelos, calibraciones y capacidades TLS de la placa. `firmware/sensor_reader.py` falla explícitamente hasta que se conecten las funciones reales; no genera muestras.
+Los sensores nuevos permanecen ausentes hasta configurar sus GPIO y atenuación después de revisar el circuito. La temperatura continúa con GPIO 4.
 
 ## Puesta en marcha
 

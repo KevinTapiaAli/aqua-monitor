@@ -4,7 +4,8 @@ import os
 import time
 import ubinascii
 
-PARAMETERS = ("ph", "temperature_c", "turbidity_value", "ec_us_cm")
+PARAMETERS = ("temperature_c", "soil_adc", "gas_adc", "light_adc")
+UNITS = {"temperature_c": "°C", "soil_adc": "ADC", "gas_adc": "ADC", "light_adc": "ADC"}
 STATES = ("ok", "uncalibrated", "out_of_range", "sensor_error", "missing")
 
 
@@ -29,6 +30,12 @@ def finite_number(value):
     return type(value) in (int, float) and math.isfinite(value)
 
 
+def valid_domain(parameter, value):
+    if parameter == "temperature_c":
+        return value >= -273.15
+    return 0 <= value <= 65535 and value == int(value)
+
+
 def make_payload(readings, clock_synced=False):
     if not isinstance(readings, dict):
         raise ValueError("El adaptador debe devolver un dict")
@@ -44,32 +51,29 @@ def make_payload(readings, clock_synced=False):
         if value is not None and not finite_number(value):
             raise ValueError("Valor no finito o no numérico")
         needs_value = state in ("ok", "out_of_range")
-        forbids_value = state in ("missing", "sensor_error") or (state == "uncalibrated" and parameter != "turbidity_value")
+        forbids_value = state in ("missing", "sensor_error", "uncalibrated")
         if (needs_value and value is None) or (forbids_value and value is not None):
             raise ValueError("Valor incompatible con su calidad")
-        if value is not None and ((parameter in ("turbidity_value", "ec_us_cm") and value < 0) or (parameter == "temperature_c" and value < -273.15)):
+        if value is not None and not valid_domain(parameter, value):
             raise ValueError("Valor físicamente incompatible")
         result[parameter] = value
-    unit = readings.get("turbidity_unit")
-    if (result["turbidity_value"] is None) != (unit is None):
-        raise ValueError("Falta valor o unidad de turbidez")
-    if unit is not None:
-        calibrated = quality["turbidity_value"] in ("ok", "out_of_range")
-        if (calibrated and unit != "NTU") or (not calibrated and unit not in ("V", "ADC")):
-            raise ValueError("Unidad de turbidez incompatible")
     raw = readings.get("raw", {})
     if not isinstance(raw, dict) or any(key not in PARAMETERS for key in raw):
         raise ValueError("raw inválido")
-    for reading in raw.values():
+    for parameter, reading in raw.items():
         if not isinstance(reading, dict) or set(reading) - {"value", "unit", "note"}:
             raise ValueError("Lectura original inválida")
         if "value" not in reading or (reading["value"] is not None and not finite_number(reading["value"])):
             raise ValueError("Valor original inválido")
         if not isinstance(reading.get("unit"), str) or not 1 <= len(reading["unit"].strip()) <= 24:
             raise ValueError("Unidad original inválida")
+        if reading["unit"] != UNITS[parameter] or (reading["value"] is not None and not valid_domain(parameter, reading["value"])):
+            raise ValueError("Valor o unidad original incompatible")
         if "note" in reading and (not isinstance(reading["note"], str) or len(reading["note"]) > 160):
             raise ValueError("Nota original inválida")
-    result["turbidity_unit"] = unit
+    for parameter in PARAMETERS:
+        if quality[parameter] == "uncalibrated" and raw.get(parameter, {}).get("value") is None:
+            raise ValueError("Falta lectura original sin calibrar")
     result["quality"] = {key: quality[key] for key in PARAMETERS}
     result["raw"] = raw
     # Congela el contenido: los reintentos conservarán ID, fecha y valores.

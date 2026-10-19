@@ -44,12 +44,14 @@ class Telemetry:
             if status in (200, 201):
                 data = result.get("data") if isinstance(result, dict) else None
                 if not isinstance(data, dict) or data.get("reading_id") != reading_id or not data.get("id"):
+                    print("Respuesta sin confirmacion de lectura; se reintentara.")
                     self._retry()
                     return
                 self.queue.pop(0)
                 self.backoff = 2
                 # Recupera el backlog a 1 lectura / 2 segundos, evitando el límite DB.
                 self.next_attempt = time.ticks_add(time.ticks_ms(), 2000)
+                print("Lectura guardada en Aqua Monitor. HTTP", status)
             elif status in (401, 403, 404) or 300 <= status < 400:
                 self.paused = True
                 print("Telemetría pausada: revisar credencial, dispositivo o URL. HTTP", status)
@@ -60,14 +62,19 @@ class Telemetry:
                 self.next_attempt = time.ticks_add(time.ticks_ms(), 2000)
                 print("Lectura rechazada; revisar contrato/calibración. HTTP", status)
             else:
+                print("Envio pendiente; se reintentara. HTTP", status)
                 self._retry(retry_after)
-        except ConfigurationError:
+        except ConfigurationError as exc:
             self.paused = True
-            print("Telemetría pausada: falta verificar/configurar TLS, RTC o credencial.")
+            # Solo mensajes propios y constantes de ApiClient, nunca del proveedor.
+            print("Telemetria pausada:", str(exc))
         except (AttributeError, TypeError, IndexError):
             self.paused = True
             print("Telemetría pausada: transporte incompatible con este firmware.")
-        except (OSError, ValueError, MemoryError):
+        except (OSError, ValueError, MemoryError) as exc:
+            stage, kind, code, reason, http_status = self.client.error_summary(exc)
+            print("Envio fallido | etapa:", stage, "| tipo:", kind,
+                  "| codigo:", code, "| motivo:", reason, "| HTTP:", http_status)
             self._retry()
 
     def resume(self):

@@ -1,35 +1,31 @@
-# Integración del hardware
+# Conexión de sensores ambientales
 
-El usuario indicó que su compañero aportará el código y los datos del hardware más adelante. No hay firmware previo ni fichas técnicas en el repositorio. No se asignaron GPIO ni se escribieron fórmulas de pH, turbidez o EC.
+Placa informada: ESP32_GENERIC, MicroPython 1.28.0. El usuario confirmó lectura DS18B20 y envío HTTP 201. Los nuevos sensores todavía no tienen GPIO ni circuito confirmados.
 
-## Información necesaria
+| Sensor | Entrada y configuración | Presentación |
+| --- | --- | --- |
+| Temperatura DS18B20 | GPIO 4, adquisición existente conservada | °C, original sin calibrar |
+| Humedad del suelo, módulo tipo YL-69/LM393 | AO; `SOIL_GPIO`, `SOIL_ATTENUATION_DB` | ADC 0–65535 |
+| Gas MQ-135 | AO; `MQ135_GPIO`, `MQ135_ATTENUATION_DB` | ADC 0–65535, no CO2 ppm |
+| Luz, módulo LDR | AO; `LDR_GPIO`, `LDR_ATTENUATION_DB` | ADC 0–65535, no lux |
 
-| Elemento | Información a completar |
-| --- | --- |
-| ESP32 | Modelo exacto de placa/chip, memoria y versión/build de MicroPython |
-| pH | Modelo de sonda y módulo, salida/unidades, alimentación, calibración real |
-| Temperatura | Modelo, interfaz, precisión y algoritmo ya utilizado |
-| Turbidez | Modelo, salida/unidad y evidencia si se expresa en NTU |
-| EC | Modelo, constante de celda, conversión válida y compensación térmica si aplica |
-| Circuito | Cableado real, GPIO, divisores/protecciones, voltajes medidos y masas |
-| Adquisición | Archivos de Thonny, tiempo de estabilización y formato actual de salida |
-| Comunicaciones | Red Wi-Fi, memoria libre, soporte TLS/CA/SNI, RTC y timeout DNS |
+## Antes de conectar
 
-La denominación “38 pines” no identifica estas características. No energizar ni alterar conexiones basándose en ese dato.
+1. Identifica el modelo real y las etiquetas VCC/GND/AO/DO de cada módulo. Necesitamos una foto legible de los módulos nuevos y los GPIO elegidos. DO es una salida de umbral; no sirve como lectura analógica de esta integración.
+2. Desconecta la alimentación antes de cambiar el cableado. Conserva el circuito de temperatura que funciona.
+3. Revisa alimentación y tensión máxima de AO. El módulo de suelo descrito por el usuario puede entregar hasta 4,2 V: no conectes esa salida directamente al ESP32. Hace falta verificar o adaptar su nivel. La alimentación admitida por el módulo no implica que su salida sea segura para el ADC.
+4. Usa entradas ADC1 independientes y expuestas en tu placa. El adaptador admite GPIO 32–39 del ESP32 original, pero su disponibilidad debe confirmarse en la placa. ADC2 tiene restricciones con Wi-Fi. Comparte GND y revisa cualquier divisor/adaptación con el circuito real, sin adivinar resistencias.
+5. Elige la atenuación `0`, `2.5`, `6` u `11` dB según el rango de entrada documentado. La atenuación no protege contra sobretensión. Configura GPIO y atenuación de cada sensor; deja `None` en los que no conectes.
+6. Para MQ-135 respeta alimentación, calentamiento y estabilización indicados por su fabricante. Solo después configura `MQ135_STABILIZATION_CONFIRMED = True`. No es un detector selectivo de CO2 ni un dispositivo de seguridad.
 
-## Reparto recomendado del trabajo
+## Puesta en marcha manual
 
-**Plataforma web:** configurar Supabase, aplicar migraciones, registrar cuenta/estación y preparar la URL HTTPS. El token de la estación se comparte con el responsable de hardware por un canal privado.
+Actualiza base, web y firmware en el orden de [SETUP.md](SETUP.md). Ejecuta `run_temperature.py` en Thonny. Compara las lecturas reales de consola con el dashboard del sensor y confirma recepción HTTP 201. Sin conectar los nuevos sensores, temperatura debe continuar y los otros canales mostrar ausencia de datos. Estas comprobaciones quedan pendientes: no se ejecutaron automáticamente.
 
-**Responsable de hardware:** conservar una copia del firmware funcional, documentar el circuito e integrar `read_sensors()` con las funciones existentes. Cada sensor debe controlar su error de forma independiente; una falla no debe convertir los otros tres valores en cero.
+Para suelo, registra referencias en condiciones conocidas y documenta una conversión antes de presentar un porcentaje. En LDR, la relación entre iluminación y ADC depende del circuito; no asumas su dirección ni la conviertas en lux sin referencia. El firmware conserva originales y no aplica coeficientes introducidos en la web automáticamente. Los datos antiguos no se recalibran al guardar una configuración.
 
-**Trabajo conjunto:** verificar reloj, unidades y TLS; confirmar en la API una lectura física; comparar la recepción con Thonny; comprobar desconexión/reintento y deduplicación. Registrar las evidencias en el informe universitario.
+## Documentación técnica
 
-## Criterios científicos
-
-- Un número de ADC no es automáticamente pH, NTU o µS/cm.
-- Si no hay conversión documentada, almacenar el original con su unidad y marcar `uncalibrated`.
-- Registrar la temperatura en °C solo cuando se haya obtenido esa magnitud; no inventar compensación térmica.
-- No aplicar coeficientes introducidos en la web a mediciones antiguas sin un proceso explícito de recalculado/trazabilidad.
-- Documentar modelos y referencias en el repositorio cuando estén disponibles; los secretos permanecen fuera de Git.
-- Evaluar potabilidad requiere otros análisis; esta plataforma no emite esa conclusión.
+- [MicroPython 1.28, ADC del ESP32](https://docs.micropython.org/en/v1.28.0/esp32/quickref.html#adc-analog-to-digital-conversion).
+- [MicroPython, read_u16](https://docs.micropython.org/en/v1.28.0/library/machine.ADC.html).
+- [Winsen, MQ-135](https://www.winsen-sensor.com/manual/mq135.html). Confirmar además la ficha del módulo que realmente se use.

@@ -1,6 +1,6 @@
 import type { Alert, AlertRule, Calibration, Device, Json, Measurement, Profile } from "./domain";
 
-// Contrato de la migración inicial. Regenerar con Supabase CLI tras cambiar el SQL.
+// Contrato ambiental de la migración 202610190001. Regenerar con Supabase CLI cuando se autorice.
 type Table<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
   Row: Row;
   Insert: Insert;

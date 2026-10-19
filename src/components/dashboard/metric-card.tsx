@@ -1,9 +1,9 @@
-import { Activity, Droplet, Thermometer, Zap } from "lucide-react";
+import { Droplet, Sun, Thermometer, Wind } from "lucide-react";
 import type { AlertRule, Json, Measurement, Parameter } from "@/types/domain";
 import { parameterInfo, qualityLabels } from "@/config/parameters";
 import { formatNumber } from "@/lib/utils/format";
 
-const icons = { ph: Droplet, temperature_c: Thermometer, turbidity_value: Activity, ec_us_cm: Zap };
+const icons = { soil_adc: Droplet, temperature_c: Thermometer, gas_adc: Wind, light_adc: Sun };
 function originalReading(raw: Json | undefined, parameter: Parameter) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const entry = raw[parameter];
@@ -17,7 +17,7 @@ export function MetricCard({ parameter, reading, rules }: { parameter: Parameter
   const value = reading?.[parameter];
   const quality = reading?.quality[parameter] ?? "missing";
   const original = quality === "uncalibrated" && value == null ? originalReading(reading?.raw, parameter) : null;
-  const unit = parameter === "turbidity_value" ? reading?.turbidity_unit ?? "—" : info.unit;
+  const unit = info.unit;
   const rule = rules.find((r) => r.parameter === parameter && r.enabled && r.unit === unit);
   const warning = quality === "ok" && value != null && rule && ((rule.min_value !== null && value < rule.min_value) || (rule.max_value !== null && value > rule.max_value));
   const state = warning ? "Advertencia por umbral" : qualityLabels[quality];

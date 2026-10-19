@@ -1,5 +1,6 @@
 """Adaptación de lecturas físicas al contrato de la API; sin datos simulados."""
 from sensors.temperature import TemperatureReader, TemperatureSensorMissing
+from sensors.analog import AnalogReader
 
 
 class SensorReader:
@@ -8,20 +9,23 @@ class SensorReader:
         self.temperature_calibrated = (
             getattr(config, "TEMPERATURE_CALIBRATION_CONFIRMED", False) is True
         )
+        self.config = config
+        self.soil = AnalogReader(getattr(config, "SOIL_GPIO", None), getattr(config, "SOIL_ATTENUATION_DB", None))
+        self.gas = AnalogReader(getattr(config, "MQ135_GPIO", None), getattr(config, "MQ135_ATTENUATION_DB", None))
+        self.light = AnalogReader(getattr(config, "LDR_GPIO", None), getattr(config, "LDR_ATTENUATION_DB", None))
 
     def read(self):
         # Los sensores pendientes no se sustituyen por ceros ni valores de ejemplo.
         readings = {
-            "ph": None,
+            "soil_adc": None,
             "temperature_c": None,
-            "turbidity_value": None,
-            "turbidity_unit": None,
-            "ec_us_cm": None,
+            "gas_adc": None,
+            "light_adc": None,
             "quality": {
-                "ph": "missing",
+                "soil_adc": "missing",
                 "temperature_c": "missing",
-                "turbidity_value": "missing",
-                "ec_us_cm": "missing",
+                "gas_adc": "missing",
+                "light_adc": "missing",
             },
             "raw": {},
         }
@@ -50,7 +54,32 @@ class SensorReader:
             readings["raw"]["temperature_c"] = {
                 "value": None, "unit": "°C", "note": "No se pudo obtener la temperatura."
             }
+        self.read_optional(readings, "soil_adc", self.soil, self.soil.read_counts, "ADC")
+        self.read_optional(readings, "gas_adc", self.gas, self.gas.read_counts, "ADC")
+        self.read_optional(readings, "light_adc", self.light, self.light.read_counts, "ADC")
         return readings
+
+    def read_optional(self, readings, parameter, reader, acquire, unit):
+        if reader.gpio is None:
+            return
+        try:
+            pins = [self.temperature.gpio, self.soil.gpio, self.gas.gpio, self.light.gpio]
+            if pins.count(reader.gpio) > 1:
+                raise ValueError("GPIO compartido entre sensores")
+            if parameter == "gas_adc" and getattr(self.config, "MQ135_STABILIZATION_CONFIRMED", False) is not True:
+                readings["raw"][parameter] = {"value": None, "unit": unit, "note": "Pendiente de estabilizacion del MQ-135 segun su ficha."}
+                return
+            value = acquire()
+            if value is None:
+                return
+            readings["raw"][parameter] = {
+                "value": value, "unit": unit,
+                "note": "Lectura ADC sin convertir; suelo no equivale a porcentaje, gas no equivale a CO2 ppm, luz no equivale a lux."
+            }
+            readings["quality"][parameter] = "uncalibrated"
+        except Exception:
+            readings["quality"][parameter] = "sensor_error"
+            readings["raw"][parameter] = {"value": None, "unit": unit, "note": "Revisar modelo, GPIO, atenuacion y conexion del sensor."}
 
 
 _reader = None

@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="relative z-10 hidden max-w-lg py-14 lg:block">
         <p className="text-xs font-semibold uppercase tracking-[.2em] text-cyan-300">Observa. Comprende. Cuida.</p>
         <h2 className="mt-5 text-5xl font-semibold leading-tight tracking-tight">Cada lectura cuenta.<br /><span className="text-cyan-300">Cada gota también.</span></h2>
-        <p className="mt-6 max-w-sm leading-7 text-slate-300">Conecta tus estaciones y encuentra en cada medición una nueva perspectiva sobre el agua.</p>
+        <p className="mt-6 max-w-sm leading-7 text-slate-300">Conecta tus estaciones y encuentra en cada medición una nueva perspectiva sobre tu entorno.</p>
         <div className="mt-10 space-y-4 text-sm text-cyan-100"><p className="flex items-center gap-3"><Radio size={18} aria-hidden="true" /> Cuatro parámetros en un solo lugar</p><p className="flex items-center gap-3"><ShieldCheck size={18} aria-hidden="true" /> Tu cuenta, tus dispositivos, tus datos</p></div>
       </div>
       <div className="relative z-10 hidden items-center gap-3 text-xs text-slate-400 lg:flex"><Waves size={24} className="text-cyan-400" aria-hidden="true" /> Tecnología para observar nuestro entorno.</div>

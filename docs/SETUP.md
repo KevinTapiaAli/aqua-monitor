@@ -1,6 +1,36 @@
 # Instalación y despliegue
 
-La instalación de dependencias, el arranque local y la revisión de tipos se realizaron a petición del usuario. Los pasos de Supabase, correo, hardware y despliegue siguen pendientes.
+Supabase, Vercel y la ingesta de temperatura ya fueron configurados y confirmados por el usuario. Para el cambio de sensores sigue la sección siguiente; el resto documenta una instalación nueva.
+
+## Actualización a sensores ambientales (proyecto existente)
+
+Esta actualización cambia el contrato de sensores. Base, web y placa deben usar la misma versión; durante el cambio habrá una pausa de adquisición.
+
+1. En Thonny pulsa **Detener**. No cambies el cableado de temperatura.
+2. Abre `supabase/migrations/202610190001_environmental_sensors.sql`. Copia su contenido al SQL Editor del mismo proyecto Supabase y ejecútalo **una sola vez**. No vuelvas a ejecutar las migraciones iniciales. La nueva migración conserva temperatura y archiva los registros anteriores en `private.sensor_transition_20261019`, fuera del acceso web; retira los campos, reglas y calibraciones de los sensores sustituidos. Si aparece un error, detén la actualización y conserva el mensaje; la transacción evita una aplicación parcial.
+3. Publica los archivos del cambio en GitHub desde PowerShell, en la raíz del proyecto:
+
+   ```powershell
+   git add src firmware docs README.md supabase/migrations/202610190001_environmental_sensors.sql
+   git diff --cached --stat
+   git commit -m "Cambiar sensores a temperatura suelo gas y luz"
+   git push origin main
+   ```
+
+   Revisa la lista antes del commit. `.env.local`, `.local-run`, `firmware/config.py` y secretos no deben incluirse. Si vuelve el error de propietario, permite únicamente este repositorio:
+
+   ```powershell
+   git config --global --add safe.directory 'C:/Users/Tapia K/OneDrive/Desktop/IOT_MONITOREO CALIDAD DEL AGUA'
+   ```
+
+4. Espera a que Vercel termine el despliegue de `main` y muestre **Ready**. No necesitas crear otro proyecto ni modificar las variables existentes para este cambio.
+5. En Thonny, desde `.local-run/esp32-temperature`, sube `sensor_reader.py`, `payload.py`, `run_temperature.py` y `config.py` a la raíz del **Dispositivo MicroPython**. Sube también `sensors/analog.py` dentro de `/sensors/`. Conserva `sensors/temperature.py`, el resto de módulos, el certificado, Wi-Fi y token. No sustituyas `main.py` ni `boot.py`.
+6. Con los GPIO nuevos en `None`, abre `run_temperature.py` y pulsa **F5**. Comprueba manualmente HTTP 201 y temperatura en la web. Verás espacios para suelo, MQ-135 y LDR sin datos inventados.
+7. Identifica y conecta los nuevos módulos siguiendo [HARDWARE.md](HARDWARE.md). Configura sus GPIO/atenuación en `config.py`, vuelve a subirlo y ejecuta el programa. El MQ-135 requiere además confirmar su estabilización real. Comprueba cada nuevo canal en Thonny y en su dashboard antes de presentar.
+
+Las lecturas sin calibrar se muestran como originales. No actives banderas de calibración para ocultar ese estado: faltan referencias físicas para expresar suelo en porcentaje, gas en concentración y luz en lux. La temperatura sigue en °C.
+
+No se ejecutaron estos pasos, builds ni pruebas automáticamente. Las órdenes anteriores son para la publicación manual solicitada.
 
 ## 1. Requisitos
 
@@ -38,6 +68,8 @@ En el SQL Editor de un proyecto Supabase vacío, ejecuta una vez, en este orden:
 
 1. `supabase/migrations/202610120001_initial_schema.sql`
 2. `supabase/migrations/202610120002_validate_sensor_limits.sql`
+3. `supabase/migrations/202610120003_registration_profiles.sql`
+4. `supabase/migrations/202610190001_environmental_sensors.sql`
 
 Cada archivo contiene su propia transacción. No vuelvas a aplicar la migración inicial sobre tablas ya creadas. Si administras migraciones con Supabase CLI, usa su mecanismo de historial en lugar de mezclarlo con ejecuciones manuales; identifica como aplicadas las migraciones que hayas ejecutado previamente.
 
@@ -97,7 +129,7 @@ Cuando la revisión y las comprobaciones manuales estén completas:
 
 Las previews requieren su propio `APP_URL` y autorización de callback. Una preview con Vercel Authentication no es accesible automáticamente desde el ESP32: utiliza el dominio destinado al dispositivo y la configuración de protección apropiada, manteniendo la autenticación por token de la API.
 
-No se creó un repositorio remoto ni se hizo commit/push/despliegue. La inspección de Git en este entorno devolvió un error de acceso/cambio al directorio del usuario; los archivos del proyecto sí se escribieron en la ruta solicitada.
+El proyecto está conectado a GitHub `KevinTapiaAli/aqua-monitor` y publicado en `https://aqua-monitor-gamma.vercel.app`. Este cambio local aún debe publicarse.
 
 ## Referencias consultadas
 

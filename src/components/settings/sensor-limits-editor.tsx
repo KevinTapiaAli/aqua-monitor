@@ -27,7 +27,7 @@ function SensorLimit({ parameter, limit }: { parameter: Parameter; limit: Sensor
     {enabled && <div className="mt-4 grid gap-4 sm:grid-cols-3">
       <label>Mínimo<input name={parameter + "_min"} type="number" step="any" required defaultValue={limit?.min} /></label>
       <label>Máximo<input name={parameter + "_max"} type="number" step="any" required defaultValue={limit?.max} /></label>
-      <label>Unidad<select name={parameter + "_unit"} defaultValue={limit?.unit ?? parameterInfo[parameter].unit}>{(parameter === "turbidity_value" ? ["NTU", "V", "ADC"] : [parameterInfo[parameter].unit]).map((unit) => <option key={unit}>{unit}</option>)}</select></label>
+      <label>Unidad<select name={parameter + "_unit"} defaultValue={limit?.unit ?? parameterInfo[parameter].unit}>{[parameterInfo[parameter].unit].map((unit) => <option key={unit}>{unit}</option>)}</select></label>
       <label className="sm:col-span-3">Referencia de la especificación<input name={parameter + "_reference"} required minLength={3} maxLength={300} defaultValue={limit?.reference} placeholder="Modelo, ficha técnica y sección del fabricante" /></label>
     </div>}
   </div>;

@@ -27,7 +27,7 @@ flowchart LR
 
 `measurements` es un registro inmutable. `(device_id, reading_id)` es único. Los `float8` rechazan NaN/infinito con restricciones, y las marcas de tiempo son `timestamptz`. `measured_at` puede ser NULL cuando falta un reloj confiable; `received_at` lo genera PostgreSQL.
 
-`quality` tiene un estado por parámetro; `raw` conserva lecturas originales con unidad. La turbidez admite NTU solo con una conversión válida; V/ADC se muestran como sin calibrar. EC utiliza µS/cm; un voltaje de EC se guarda en `raw.ec_us_cm`, no en la columna física.
+`quality` tiene un estado por parámetro; `raw` conserva lecturas originales con unidad. Temperatura usa °C; humedad del suelo, MQ-135 y LDR usan ADC (0–65535). Los valores sin calibrar se analizan como originales, sin convertirlos en porcentaje, CO2 ppm o lux. La migración ambiental archiva los datos de sensores retirados en el esquema privado y conserva la serie de temperatura.
 
 `calibrations` registra evidencia y coeficientes, sin alterar automáticamente el firmware o la historia. `alert_rules` admite un mínimo y/o máximo por variable y dispositivo. `alerts` conserva eventos por lectura. Reconocer un evento no lo borra ni significa que el agua sea apta.
 

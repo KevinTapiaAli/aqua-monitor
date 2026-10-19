@@ -1,6 +1,6 @@
 # Capa de integración MicroPython
 
-Esta carpeta añade comunicación alrededor de la adquisición existente. **No es firmware físico terminado ni probado en la placa.** El modelo de ESP32, versión de MicroPython y los sensores todavía se desconocen.
+Esta carpeta integra adquisición y transporte para ESP32_GENERIC / MicroPython 1.28.0. El usuario confirmó DS18B20 en GPIO 4 y envíos HTTP 201. Los nuevos adaptadores analógicos están preparados, sin conexión ni comprobación física todavía.
 
 No se crean `main.py` ni `boot.py`: deben conservarse los que ya funcionan. `sensor_reader.py` es un punto de integración explícito, sin muestras falsas.
 
@@ -9,7 +9,7 @@ No se crean `main.py` ni `boot.py`: deben conservarse los que ya funcionan. `sen
 | Archivo | Función |
 | --- | --- |
 | `config.example.py` | Plantilla sin secretos |
-| `sensor_reader.py` | Adaptador pendiente de funciones físicas reales |
+| `sensor_reader.py` | DS18B20 y entradas opcionales de suelo, MQ-135 y LDR |
 | `payload.py` | Calidad, unidades, JSON y UUID por adquisición |
 | `wifi_manager.py` | Reconexión Wi-Fi por pasos, sin espera en bucle |
 | `api_client.py` | HTTPS, certificados, límites de respuesta y cierre de sockets |
@@ -45,15 +45,9 @@ La existencia de una URL HTTPS no demuestra validación del servidor. La documen
 
 El transporte preparado requiere `ssl.SSLContext`, `PROTOCOL_TLS_CLIENT`, `CERT_REQUIRED`, carga de CA mediante `cadata` y verificación de hostname/SNI. Utiliza una CA raíz obtenida de una fuente confiable que valide el certificado del dominio real; no se incluye una CA arbitraria. La compatibilidad exacta debe consultarse en la documentación de la **versión instalada**, no asumirla a partir de `latest`.
 
-Antes de habilitar `TLS_CAPABILITIES_VERIFIED`:
+En ESP32_GENERIC / MicroPython 1.28.0, `ClockManager` sincroniza RTC por NTP al iniciar, reintenta cada 30 segundos y renueva la hora cada 6 horas. `CLOCK_SYNCED` es estado de ejecución, no una confirmación manual. La entrega local incluye GTS Root R1 descargado de https://pki.goog/repo/certs/gtsr1.der, con huella SHA-256 cotejada con la raíz del almacén Mozilla incluido en Node. Reemplaza la anterior ISRG Root X1; el usuario confirmó después HTTP 201 desde la placa. La consulta desde el PC está interceptada por Avast y no permite confirmar la cadena pública del ESP32. Véase [STATUS.md](../docs/STATUS.md).
 
-1. Ajusta RTC en UTC usando el mecanismo comprobado para la placa. No se añadió una sincronización NTP automática con supuestos sobre su timeout.
-2. Configura `CLOCK_SYNCED = True` solo después de sincronizar; al reiniciar debe repetirse la comprobación. El valor de la plantilla es False.
-3. Comprueba conexión al dominio correcto y que un certificado/CA incorrecto y un hostname incorrecto sean rechazados.
-4. Comprueba que las operaciones TCP y el handshake respeten el timeout de socket en ese port.
-5. Verifica el comportamiento de DNS o configura una dirección IPv4 literal en `API_IP`. Si dependes de DNS, marca `DNS_TIMEOUT_VERIFIED` solo al comprobar que `getaddrinfo` termina dentro de un tiempo aceptable para la adquisición. El timeout de socket no acota necesariamente la resolución DNS.
-
-Sin TLS/reloj verificados o sin DNS acotado/IP, `Telemetry` se pausa y la adquisición puede continuar. No hay opción para aceptar cualquier certificado. Una IP fija sigue usando `API_HOST` para SNI y validación; puede cambiar con el alojamiento y deberá actualizarse. No se recomienda fijarla permanentemente sin conocer la infraestructura.
+Se eliminaron las banderas manuales `TLS_CAPABILITIES_VERIFIED` y `DNS_TIMEOUT_VERIFIED`. El cliente exige realmente `CERT_REQUIRED`, CA y hostname al conectar, y no envía antes de sincronizar el reloj. Esto no constituye una prueba física: siguen pendientes el rechazo de certificados/hostname incorrectos y los tiempos en la placa. DNS depende de lwIP y puede retrasar la adquisición; el timeout TCP no limita `getaddrinfo`.
 
 Si el firmware no ofrece estas capacidades, adaptar el transporte a su versión o evaluar una actualización **después** de respaldar y verificar los drivers. No degradar a HTTP o `CERT_NONE` para que “funcione”.
 
@@ -62,7 +56,7 @@ Si el firmware no ofrece estas capacidades, adaptar el transporte a su versión 
 - Intervalo inicial: 10 segundos configurable. El bucle conserva adquisición sin Wi-Fi y reintenta la red por pasos.
 - Cada adquisición recibe un UUID aleatorio. El JSON se congela al encolar y se reutiliza íntegro en cada intento.
 - Cola por defecto: 30 lecturas en RAM, aproximadamente 5 minutos al intervalo de referencia. Al llenarse, descarta la más antigua y aumenta `dropped`; al reiniciar se pierde la cola. Ajustar capacidad con la memoria real.
-- Una solicitud HTTPS usa timeouts y un plazo total de referencia de 8 segundos. Es síncrona: puede retrasar temporalmente la siguiente lectura. No se promete adquisición de tiempo real estricto durante el handshake. Un requisito de muestreo más exigente debe resolverse al revisar el firmware físico.
+- Una solicitud HTTPS usa timeouts y un plazo total de referencia de 20 segundos. Es síncrona: puede retrasar temporalmente la siguiente lectura. No se promete adquisición de tiempo real estricto durante el handshake. Un requisito de muestreo más exigente debe resolverse al revisar el firmware físico.
 - Fallos de red/5xx: backoff de 2 a 120 segundos; sin ráfagas. Recuperación de pendientes a una lectura cada 2 segundos.
 - 429: respeta Retry-After con límite configurado y conserva el cuerpo.
 - 400/409/413/415/422: rechaza esa entrada, incrementa `rejected` y permite continuar a las siguientes. Un conflicto de ID requiere investigar el integrador.
@@ -77,3 +71,9 @@ La cola no es almacenamiento duradero. Antes de una demostración prolongada, do
 Identificar componentes → integrar funciones → validar contrato/unidades → comprobar TLS/RTC/DNS → primera lectura física → comparar con Thonny → desconectar/reconectar Wi-Fi → comprobar ID único y eventos → rotar/revocar token.
 
 No ejecutar muestras ficticias en la estación de demostración. Las comprobaciones de contrato se realizan en un proyecto Supabase separado y claramente identificado como pruebas, cuando se autoricen.
+
+## Sensores ambientales
+
+Actualiza primero Supabase y Vercel según [SETUP.md](../docs/SETUP.md). Conserva la adquisición de temperatura. Para los nuevos sensores, configura `SOIL_GPIO`, `MQ135_GPIO`, `LDR_GPIO` y sus respectivos `*_ATTENUATION_DB` solo después de revisar el hardware. `None` deja el canal ausente; se usan entradas ADC1 y `read_u16`. No se usa DHT ni humedad del aire.
+
+El MQ-135 permanece pendiente hasta confirmar su estabilización según la ficha del módulo y configurar `MQ135_STABILIZATION_CONFIRMED = True`. El firmware envía las tres lecturas ADC en `raw`, con calidad `uncalibrated`; la web permite analizarlas como originales. No basta cambiar una bandera para obtener porcentaje, ppm o lux. Consulta [HARDWARE.md](../docs/HARDWARE.md).

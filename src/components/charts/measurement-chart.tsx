@@ -7,7 +7,7 @@ export default function MeasurementChart({ rows, parameter, unit }: { rows: Meas
   const info = parameterInfo[parameter];
   const points = [...rows].reverse().map((row) => ({
     time: Date.parse(row.received_at),
-    value: (row.quality[parameter] === "ok" || (parameter === "turbidity_value" && row.quality[parameter] === "uncalibrated")) && (parameter !== "turbidity_value" || row.turbidity_unit === unit) ? row[parameter] : null,
+    value: row.quality[parameter] === "ok" ? row[parameter] : null,
   }));
   const timeLabel = (value: number) => new Date(value).toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: "America/La_Paz" });
   return <div className="h-56 w-full" role="img" aria-label={`Evolución de ${info.label} en ${unit}. Los datos también están en la tabla de historial.`}>

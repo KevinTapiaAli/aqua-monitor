@@ -48,16 +48,15 @@ Ejemplo documental de **ausencia de datos**, no una medición ni un seed. No env
 {
   "reading_id": "772405ad-699d-4e58-9bbc-02404a726dd3",
   "measured_at": null,
-  "ph": null,
+  "soil_adc": null,
   "temperature_c": null,
-  "turbidity_value": null,
-  "turbidity_unit": null,
-  "ec_us_cm": null,
+  "gas_adc": null,
+  "light_adc": null,
   "quality": {
-    "ph": "missing",
+    "soil_adc": "missing",
     "temperature_c": "missing",
-    "turbidity_value": "missing",
-    "ec_us_cm": "missing"
+    "gas_adc": "missing",
+    "light_adc": "missing"
   },
   "raw": {}
 }
@@ -73,17 +72,17 @@ Todos los campos principales son obligatorios. Omitir uno da 422. `null` es una 
 | --- | --- | --- |
 | `ok` | Número finito | Conversión física válida y lectura aceptada por el adaptador |
 | `out_of_range` | Número finito | Lectura que el adaptador identifica como fuera de su condición válida; genera evento |
-| `uncalibrated` | NULL; turbidez puede ser V/ADC | Conversión física/calibración pendiente; conservar original en `raw` |
+| `uncalibrated` | NULL | Conversión física/calibración pendiente; conservar original en `raw` |
 | `sensor_error` | NULL | Fallo de sensor; genera evento |
 | `missing` | NULL | Dato no disponible; no inventa lectura |
 
 `ok` no certifica exactitud metrológica; el responsable debe documentar la conversión real en firmware. Los límites de la ficha técnica configurados se aplican **incluso** a estados `out_of_range`; si el sensor informa una condición que no permite un valor físico válido, envía NULL + `sensor_error` y su dato original.
 
-Unidades principales: pH, °C, NTU y µS/cm. Para turbidez `V` y `ADC` requieren `uncalibrated`. Valor y unidad de turbidez deben ser ambos NULL o ambos presentes. No se convierten mS/cm a µS/cm automáticamente.
+Unidades: `temperature_c` en °C; `soil_adc`, `gas_adc` y `light_adc` en ADC entero de 0 a 65535 (`read_u16`). El suelo no se expresa en porcentaje; MQ-135 no se presenta como CO2 ppm y LDR no se presenta en lux.
 
 `raw` es un objeto opcionalmente vacío con claves entre los cuatro parámetros. Cada entrada contiene `value` numérico finito o NULL, `unit` de 1–24 caracteres y `note` opcional de hasta 160 caracteres. Se preserva sin usarla para certificar calidad o activar umbrales físicos.
 
-La validación general rechaza temperatura bajo el cero absoluto, turbidez/EC negativos, infinitos, NaN, booleanos y números enviados como cadenas. No impone rangos de un modelo que todavía no se conoce. En particular, no trata 0–14 como un límite universal del pH. Los rangos instrumentales se configuran con referencia documental en la estación.
+La validación rechaza temperatura bajo el cero absoluto, ADC fraccionario o fuera de 0–65535, infinitos, NaN, booleanos y cadenas numéricas, también dentro de `raw`. Cada original debe usar la unidad indicada para su parámetro. `uncalibrated` exige valor principal NULL y valor original presente.
 
 ### Respuestas
 
@@ -105,7 +104,7 @@ La validación general rechaza temperatura bajo el cero absoluto, turbidez/EC ne
   "error": {
     "code": "VALIDATION_ERROR",
     "message": "Revisa los campos enviados.",
-    "details": [{ "field": "ph", "message": "Este estado requiere un valor numérico." }]
+    "details": [{ "field": "soil_adc", "message": "Este estado requiere un valor numérico." }]
   }
 }
 ```

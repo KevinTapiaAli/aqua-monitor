@@ -84,9 +84,9 @@ export function openApiDocument() {
     openapi: "3.1.0",
     info: {
       title: "Aqua Monitor API",
-      version: "1.0.0",
+      version: "2.0.0",
       description: [
-        "API del sistema IoT multiparamétrico de calidad del agua.",
+        "API del sistema IoT multiparamétrico de condiciones ambientales.",
         "**Usuarios web:** inicia sesión en `/login` en este navegador. Las cookies se envían automáticamente; no introduzcas claves de Supabase en Authorize.",
         "**ESP32:** usa Authorize → DeviceToken y pega únicamente el token `aq_...` de tu dispositivo. Swagger añade el prefijo Bearer.",
         "Los cuerpos y valores de ejemplo describen el contrato; no representan mediciones físicas. Try it out ejecuta solicitudes reales sobre la base configurada.",
@@ -106,7 +106,7 @@ export function openApiDocument() {
       "/api/v1/ingest": {
         post: {
           tags: ["Ingesta"], operationId: "ingestMeasurement", summary: "Recibir una lectura del ESP32",
-          description: "Máximo 16 KiB. Todos los campos principales son obligatorios; null expresa ausencia. Conserva reading_id y contenido al reintentar. Mismo ID y contenido: 200 sin duplicación; contenido distinto: 409. Nueva lectura: 201. Límite de una inserción nueva por segundo/dispositivo. La identidad procede exclusivamente del token. Sin un reloj sincronizado, measured_at debe ser null; no se permiten fechas anteriores a 2020 ni más de cinco minutos en el futuro. Calidad ok/out_of_range requiere un valor; missing/sensor_error requiere null. Datos sin calibrar van en raw, excepto turbidez V/ADC. NTU requiere una conversión documentada. Los límites de cada modelo se configuran por dispositivo.",
+          description: "Máximo 16 KiB. Todos los campos principales son obligatorios; null expresa ausencia. Conserva reading_id y contenido al reintentar. Mismo ID y contenido: 200 sin duplicación; contenido distinto: 409. Nueva lectura: 201. Límite de una inserción nueva por segundo/dispositivo. La identidad procede exclusivamente del token. Sin un reloj sincronizado, measured_at debe ser null; no se permiten fechas anteriores a 2020 ni más de cinco minutos en el futuro. Calidad ok/out_of_range requiere un valor; missing/sensor_error requiere null. Datos sin calibrar van en raw. Humedad del suelo, MQ-135 y LDR en ADC normalizado 0–65535; no equivalen a humedad porcentual, CO₂ ppm ni lux. Los límites de cada modelo se configuran por dispositivo.",
           security: [{ DeviceToken: [] }], requestBody: body("IngestRequest"),
           responses: {
             ...responses(ref("IngestReceipt"), 201, [400, 401, 403, 409, 413, 415, 422, 429, 500, 503]),
@@ -182,7 +182,7 @@ export function openApiDocument() {
         parameters: [idPath],
         post: {
           tags: ["Alertas"], operationId: "acknowledgeAlert", summary: "Reconocer una alerta",
-          description: `${mutationNote} Conserva el evento histórico. No certifica la calidad del agua.`,
+          description: `${mutationNote} Conserva el evento histórico. No certifica la condiciones ambientales.`,
           responses: responses(object({ acknowledged: { type: "boolean", const: true } }), 200, [401, 403, 404, 422, 500, 503]),
         },
       },

@@ -24,15 +24,15 @@ export default function Home() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
           <div>
             <p className="mb-6 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.17em] text-cyan-800"><span className="h-px w-7 bg-cyan-700" /> Monitoreo ambiental conectado</p>
-            <h1 className="max-w-xl text-[clamp(2.9rem,5.5vw,4.65rem)] font-semibold leading-[1.04] tracking-[-.055em] text-[#153b46]">Conoce el agua.<br /><span className="text-[#0c8798]">Comprende<br className="hidden lg:block" /> cada cambio.</span></h1>
-            <p className="mt-7 max-w-md text-base leading-7 text-slate-600 sm:text-lg">De tus sensores a una visión clara. Reúne las mediciones de pH, temperatura, turbidez y conductividad en un solo espacio.</p>
+            <h1 className="max-w-xl text-[clamp(2.9rem,5.5vw,4.65rem)] font-semibold leading-[1.04] tracking-[-.055em] text-[#153b46]">Conoce tu entorno.<br /><span className="text-[#0c8798]">Comprende<br className="hidden lg:block" /> cada cambio.</span></h1>
+            <p className="mt-7 max-w-md text-base leading-7 text-slate-600 sm:text-lg">De tus sensores a una visión clara. Reúne las mediciones de temperatura, humedad del suelo, gas y luz en un solo espacio.</p>
             <div className="mt-9 flex flex-wrap gap-3"><Link href="/register" className="btn px-6! py-3.5!">Crear mi cuenta <ArrowRight size={17} aria-hidden="true" /></Link><a href="#parametros" className="btn btn-secondary px-6! py-3.5!">Explorar parámetros <ArrowDown size={16} aria-hidden="true" /></a></div>
             <p className="mt-6 flex items-center gap-2 text-xs text-slate-500"><ShieldCheck size={15} aria-hidden="true" /> Acceso personal · Estaciones protegidas · Datos con contexto</p>
           </div>
           <div className="relative mx-auto w-full max-w-lg">
             <div className="relative overflow-hidden rounded-[2rem] border border-white bg-[#e7f2f1] shadow-[0_24px_80px_-28px_#19546640]">
               <div className="relative z-10 flex items-center justify-between px-6 pt-6 text-xs"><span className="flex items-center gap-2 font-semibold text-teal-900"><Waves size={18} aria-hidden="true" /> Observación multiparamétrica</span><span className="rounded-full bg-white/75 px-2.5 py-1 text-[10px] text-slate-600">4 variables</span></div>
-              <svg viewBox="0 0 500 380" className="w-full" role="img" aria-label="Ilustración conceptual del agua y sus cuatro parámetros de monitoreo">
+              <svg viewBox="0 0 500 380" className="w-full" role="img" aria-label="Ilustración conceptual de cuatro sensores ambientales">
                 <defs>
                   <linearGradient id="water-top" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#7fd6cd" /><stop offset="1" stopColor="#35a6b5" /></linearGradient>
                   <linearGradient id="water-side" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#15869d" /><stop offset="1" stopColor="#0e566f" /></linearGradient>
@@ -45,7 +45,7 @@ export default function Home() {
                 <g fill="none" stroke="#ddfffa" strokeWidth="1.5" opacity=".5"><ellipse cx="250" cy="182" rx="104" ry="43" /><ellipse cx="250" cy="182" rx="70" ry="29" /><ellipse cx="250" cy="182" rx="36" ry="15" /><path d="M80 205 250 283 420 205M80 225 250 304 420 225" /></g>
                 <g stroke="#337e87" strokeDasharray="4 5" fill="none"><path d="M145 102v71M250 62v104M355 102v71M250 266v28" /></g>
                 <g fill="#fff" stroke="#d3e6e5"><rect x="101" y="69" width="88" height="35" rx="12" /><rect x="207" y="27" width="86" height="35" rx="12" /><rect x="311" y="69" width="88" height="35" rx="12" /><rect x="209" y="290" width="82" height="35" rx="12" /></g>
-                <g fill="#175361" fontFamily="Arial, sans-serif" fontSize="13" fontWeight="600" textAnchor="middle"><text x="145" y="91">pH</text><text x="250" y="49">°C</text><text x="355" y="91">Turbidez</text><text x="250" y="312">EC</text></g>
+                <g fill="#175361" fontFamily="Arial, sans-serif" fontSize="13" fontWeight="600" textAnchor="middle"><text x="145" y="91">Humedad</text><text x="250" y="49">°C</text><text x="355" y="91">MQ-135</text><text x="250" y="312">LDR</text></g>
                 <circle cx="250" cy="182" r="5" fill="#efffff" /><circle cx="145" cy="175" r="3" fill="#efffff" /><circle cx="355" cy="175" r="3" fill="#efffff" />
               </svg>
               <div className="grid grid-cols-3 gap-3 border-t border-white/70 bg-white/65 px-6 py-5 text-center"><div><p className="text-sm font-semibold text-teal-950">Sensores</p><p className="mt-1 text-[10px] text-slate-500">Adquisición</p></div><div className="border-x border-slate-200/70"><p className="text-sm font-semibold text-teal-950">Estaciones</p><p className="mt-1 text-[10px] text-slate-500">Conexión</p></div><div><p className="text-sm font-semibold text-teal-950">Información</p><p className="mt-1 text-[10px] text-slate-500">Seguimiento</p></div></div>
@@ -67,6 +67,6 @@ export default function Home() {
         {!configured && <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs leading-5 text-slate-500"><span className="size-1.5 shrink-0 rounded-full bg-amber-500" /> Entorno local: la conexión de cuentas y datos está pendiente de configurar.</p>}
       </section>
     </main>
-    <footer className="border-t border-slate-200 bg-white"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 px-5 py-8 sm:px-8"><div><Link href="/" className="flex items-center gap-2 text-sm font-bold"><Droplets size={18} className="text-cyan-700" aria-hidden="true" /> Aqua Monitor</Link><p className="mt-2 max-w-xl text-xs leading-6 text-slate-500">El monitoreo fisicoquímico aporta información; por sí solo no determina la potabilidad del agua.</p></div><div className="flex gap-5 text-xs text-slate-600"><Link href="/login" className="hover:text-cyan-800">Acceder</Link><Link href="/swagger" className="hover:text-cyan-800">API · Swagger <span aria-hidden="true">↗</span></Link></div></div></footer>
+    <footer className="border-t border-slate-200 bg-white"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 px-5 py-8 sm:px-8"><div><Link href="/" className="flex items-center gap-2 text-sm font-bold"><Droplets size={18} className="text-cyan-700" aria-hidden="true" /> Aqua Monitor</Link><p className="mt-2 max-w-xl text-xs leading-6 text-slate-500">Las lecturas de gas y luz son analógicas; no representan CO₂ en ppm ni iluminación en lux.</p></div><div className="flex gap-5 text-xs text-slate-600"><Link href="/login" className="hover:text-cyan-800">Acceder</Link><Link href="/swagger" className="hover:text-cyan-800">API · Swagger <span aria-hidden="true">↗</span></Link></div></div></footer>
   </div>;
 }
