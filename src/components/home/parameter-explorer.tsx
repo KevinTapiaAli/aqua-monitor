@@ -4,8 +4,7 @@ import { ArrowUpRight, Droplet, Thermometer, Wind, Sun } from "lucide-react";
 import Link from "next/link";
 
 const variables = [
-  { key: "temperature", label: "Temperatura", unit: "Grados Celsius · °C", icon: Thermometer, title: "Evolución de la temperatura", text: "Sigue las lecturas de tu DS18B20 y observa sus cambios en tiempo real.", context: "La lectura original se conserva aunque aún no se haya verificado la calibración.", color: "#b45309" },
-  { key: "humidity", label: "Humedad del suelo", unit: "Lectura analógica · ADC", icon: Droplet, title: "Respuesta de humedad del suelo", text: "Integra la salida analógica de un módulo de suelo tipo YL-69 y sigue sus cambios.", context: "No se muestra un porcentaje: primero hay que caracterizar la sonda y el suelo.", color: "#0e7490" },
+  { key: "temperature", label: "Temperatura", unit: "Grados Celsius · °C", icon: Thermometer, title: "Evolución de la temperatura", text: "Sigue las lecturas de tu DS18B20 y observa sus cambios en tiempo real.", context: "Lecturas originales de la sonda en grados Celsius.", color: "#b45309" },
   { key: "gas", label: "Gas · MQ-135", unit: "Lectura analógica · ADC", icon: Wind, title: "Respuesta del sensor de gas", text: "Observa cambios en la respuesta analógica del MQ-135, conservando sus datos originales.", context: "No representa CO₂ en ppm ni una certificación de calidad del aire.", color: "#6d28d9" },
   { key: "light", label: "Luz · LDR", unit: "Lectura analógica · ADC", icon: Sun, title: "Variaciones de iluminación", text: "Compara la respuesta del LDR ante cambios de luz en el entorno.", context: "La lectura no está expresada en lux y depende del divisor o módulo utilizado.", color: "#047857" },
 ];

@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import { parameterInfo } from "@/config/parameters";
-import { parameters, type Parameter, type SensorLimits } from "@/types/domain";
+import { displayParameters as parameters, parameterInfo } from "@/config/parameters";
+import { type Parameter, type SensorLimits } from "@/types/domain";
 
-export function readSensorLimits(form: FormData): SensorLimits {
-  const limits: SensorLimits = {};
+export function readSensorLimits(form: FormData, existing: SensorLimits = {}): SensorLimits {
+  const limits: SensorLimits = existing.soil_adc ? { soil_adc: existing.soil_adc } : {};
   for (const parameter of parameters) {
     if (form.get(parameter + "_enabled") !== "on") continue;
     const min = Number(form.get(parameter + "_min"));

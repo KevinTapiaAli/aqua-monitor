@@ -1,7 +1,19 @@
-import { parameterInfo } from "@/config/parameters";
+import { displayParameters, parameterInfo } from "@/config/parameters";
 import type { Measurement, Parameter } from "@/types/domain";
 
 export type SensorSample = { value: number; unit: string; original: boolean };
+
+export function visibleOriginals(row: Measurement) {
+  const result: Record<string, { value: unknown; unit: unknown }> = {};
+  if (!row.raw || typeof row.raw !== "object" || Array.isArray(row.raw)) return result;
+  for (const parameter of displayParameters) {
+    const entry = row.raw[parameter];
+    if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+      result[parameter] = { value: entry.value ?? null, unit: entry.unit ?? parameterInfo[parameter].unit };
+    }
+  }
+  return result;
+}
 
 export function sensorSample(row: Measurement, parameter: Parameter): SensorSample | null {
   const quality = row.quality[parameter];

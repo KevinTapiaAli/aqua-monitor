@@ -35,7 +35,7 @@ export function AppShell({ email, displayName, children }: { email: string; disp
     <main id="main-content" className="mx-auto max-w-[1600px] space-y-7 p-5 lg:p-9">
       <div className="flex flex-wrap items-center justify-between gap-4"><p className="eyebrow">Sistema IoT multiparamétrico</p><label className="w-full text-xs sm:w-64">Estación seleccionada<select value={selectedId} onChange={(event) => select(event.target.value)} disabled={!devices.length}>{!devices.length && <option value="">Sin dispositivos</option>}{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label></div>
       {children}
-      <footer className="border-t border-slate-200 pt-5 text-xs leading-5 muted">Temperatura · Humedad · Gas · Luz <span className="mx-2">/</span> Horarios: Bolivia (UTC−4). Sin datos simulados.</footer>
+      <footer className="border-t border-slate-200 pt-5 text-xs leading-5 muted">Temperatura · Gas · Luz <span className="mx-2">/</span> Horarios: Bolivia (UTC−4). Sin datos simulados.</footer>
     </main>
   </div>;
 }

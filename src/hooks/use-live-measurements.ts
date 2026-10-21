@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { browserClient } from "@/lib/supabase/browser";
 import { api } from "@/lib/api/client";
-import type { Alert, AlertRule, Device, Measurement, PageResult } from "@/types/domain";
+import type { Alert, Device, Measurement, PageResult } from "@/types/domain";
 
 function mergeRows(existing: Measurement[], incoming: Measurement[]) {
   return [...new Map([...existing, ...incoming].map((row) => [row.id, row])).values()]
@@ -12,7 +12,6 @@ export function useLiveMeasurements(initialDevice: Device) {
   const [device, setDevice] = useState(initialDevice);
   const [rows, setRows] = useState<Measurement[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [rules, setRules] = useState<AlertRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [connection, setConnection] = useState("Conectando");
@@ -31,16 +30,15 @@ export function useLiveMeasurements(initialDevice: Device) {
       alertUpdates = [];
       try {
         const suffix = `device_id=${initialDevice.id}`;
-        const [history, pending, thresholds, devices] = await Promise.all([
+        const [history, pending, devices] = await Promise.all([
           api<PageResult<Measurement>>(`measurements?${suffix}&limit=120`, { signal: abort.signal }),
           api<Alert[]>(`alerts?${suffix}`, { signal: abort.signal }),
-          api<AlertRule[]>(`alert-rules?${suffix}`, { signal: abort.signal }),
           api<Device[]>("devices", { signal: abort.signal }),
         ]);
         if (!active || requestGeneration !== generation) return;
         const fresh = devices.find((d) => d.id === initialDevice.id);
         if (!fresh) {
-          setRows([]); setAlerts([]); setRules([]);
+          setRows([]); setAlerts([]);
           setError("La estación ya no está disponible para esta cuenta.");
           return;
         }
@@ -52,7 +50,6 @@ export function useLiveMeasurements(initialDevice: Device) {
         }
         alertUpdates = null;
         setAlerts([...reconciled.values()].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 50));
-        setRules(thresholds);
         setDevice((previous) => ({ ...fresh, last_received_at: previous.last_received_at && (!fresh.last_received_at || Date.parse(previous.last_received_at) > Date.parse(fresh.last_received_at)) ? previous.last_received_at : fresh.last_received_at }));
         setError("");
       } catch (failure) {
@@ -63,6 +60,7 @@ export function useLiveMeasurements(initialDevice: Device) {
     const channel = supabase.channel(`station-${initialDevice.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "measurements", filter: `device_id=eq.${initialDevice.id}` }, (payload) => {
         const row = payload.new as Measurement;
+        setNow(Date.now());
         setRows((previous) => mergeRows(previous, [row]));
         setDevice((previous) => ({ ...previous, last_received_at: !previous.last_received_at || Date.parse(row.received_at) > Date.parse(previous.last_received_at) ? row.received_at : previous.last_received_at }));
       })
@@ -87,5 +85,5 @@ export function useLiveMeasurements(initialDevice: Device) {
     await api(`alerts/${id}/acknowledge`, { method: "POST" });
     setAlerts((previous) => previous.filter((a) => a.id !== id));
   }
-  return { device, rows, alerts, rules, loading, error, connection, now, acknowledge, retry: () => setRevision((n) => n + 1) };
+  return { device, rows, alerts, loading, error, connection, now, acknowledge, retry: () => setRevision((n) => n + 1) };
 }
