@@ -9,6 +9,6 @@ export function ChartPanel({ rows, parameter }: { rows: Measurement[]; parameter
   const unit = info.unit;
   return <section className="panel min-w-0"><div className="mb-5 flex items-center justify-between"><h3 className="text-sm font-semibold">{info.label}</h3><span className="text-xs muted">{unit}</span></div>
     {rows.length ? <Chart rows={rows} parameter={parameter} unit={unit} /> : <div className="flex h-56 items-center justify-center text-sm muted">Esperando mediciones</div>}
-    <p className="mt-3 text-[11px] muted">Hora de recepción · Se separan unidades y se omiten valores inválidos.</p>
+    <p className="mt-3 text-[11px] muted">Hora de recepción · Incluye lecturas originales; omite errores y datos no disponibles.</p>
   </section>;
 }
