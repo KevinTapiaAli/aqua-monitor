@@ -70,12 +70,15 @@ En el SQL Editor de un proyecto Supabase vacío, ejecuta una vez, en este orden:
 2. `supabase/migrations/202610120002_validate_sensor_limits.sql`
 3. `supabase/migrations/202610120003_registration_profiles.sql`
 4. `supabase/migrations/202610190001_environmental_sensors.sql`
+5. `supabase/migrations/202611260001_observer_access.sql`
 
 Cada archivo contiene su propia transacción. No vuelvas a aplicar la migración inicial sobre tablas ya creadas. Si administras migraciones con Supabase CLI, usa su mecanismo de historial en lugar de mezclarlo con ejecuciones manuales; identifica como aplicadas las migraciones que hayas ejecutado previamente.
 
 La primera migración habilita RLS y añade `measurements`, `alerts` y `devices` a la publicación `supabase_realtime`. Confirma que Realtime está habilitado en tu proyecto. No introduzcas datos de prueba en la base que se utilizará para la demostración física.
 
 No hay contraseñas de usuarios en tablas personalizadas. Auth administra sus propios usuarios. El perfil complementario se crea al guardar el nombre; registrar un dispositivo crea automáticamente la asociación del propietario.
+
+En una instalación existente que ya recibió las migraciones anteriores, aplica la 202611260001 para habilitar la gestión de observadores. El observador inicia sesión y copia su identificador desde **Configuración → Perfil de usuario**. El administrador selecciona su estación y lo ingresa en **Configuración → Gestionar observadores**. El permiso se concede por estación. El mismo panel permite quitar el acceso.
 
 ## 4. Autenticación y correo
 

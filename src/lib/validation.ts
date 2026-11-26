@@ -119,3 +119,4 @@ export const measurementQuerySchema = z.object({
   if (Boolean(v.from) !== Boolean(v.to)) ctx.addIssue({ code: "custom", path: ["from"], message: "Indica ambas fechas." });
 });
 export const profileSchema = z.strictObject({ display_name: z.string().trim().min(1).max(100) });
+export const observerSchema = z.strictObject({ user_id: uuidSchema });

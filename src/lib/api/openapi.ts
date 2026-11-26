@@ -5,6 +5,7 @@ import {
   deviceSchema,
   deviceUpdateSchema,
   ingestSchema,
+  observerSchema,
   profileSchema,
   ruleSchema,
   sensorLimitsSchema,
@@ -159,6 +160,25 @@ export function openApiDocument() {
           parameters: [deviceQuery], responses: responses(nullable(object({ device_id: uuid, status: { type: "string", enum: ["online", "offline", "waiting", "disabled"] }, last_received_at: nullable(timestamp), expected_interval_seconds: { type: "integer" } }))),
         },
       },
+      "/api/v1/devices/observers": {
+        parameters: [deviceQuery],
+        get: {
+          tags: ["Dispositivos"], operationId: "listObservers", summary: "Listar observadores de la estación",
+          description: "Requiere sesión del propietario. Devuelve los identificadores de los observadores.",
+          responses: responses({ type: "array", items: uuid }),
+        },
+        post: {
+          tags: ["Dispositivos"], operationId: "grantObserverAccess", summary: "Conceder acceso de observador",
+          description: `${mutationNote} El identificador pertenece a una cuenta existente. Una segunda solicitud conserva el acceso ya concedido.`,
+          requestBody: body("ObserverAccount"),
+          responses: responses(uuid, 200, [400, 401, 403, 404, 413, 415, 422, 500, 503]),
+        },
+        delete: {
+          tags: ["Dispositivos"], operationId: "revokeObserverAccess", summary: "Revocar acceso de observador",
+          description: mutationNote, requestBody: body("ObserverAccount"),
+          responses: responses(uuid, 200, [400, 401, 403, 413, 415, 422, 500, 503]),
+        },
+      },
       "/api/v1/devices/{id}/credentials": {
         parameters: [idPath],
         post: {
@@ -225,6 +245,7 @@ export function openApiDocument() {
         IngestRequest: ingest,
         DeviceCreate: fromZod(deviceSchema),
         DeviceUpdate: fromZod(deviceUpdateSchema),
+        ObserverAccount: fromZod(observerSchema),
         AlertRuleInput: rule,
         CalibrationInput: calibration,
         ProfileInput: fromZod(profileSchema),

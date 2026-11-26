@@ -1,23 +1,51 @@
 "use client";
+import { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { sensorSample } from "@/lib/utils/sensor-analysis";
 import { parameterInfo } from "@/config/parameters";
 import type { Measurement, Parameter } from "@/types/domain";
 
-export default function MeasurementChart({ rows, parameter, unit }: { rows: Measurement[]; parameter: Parameter; unit: string }) {
+const timeFormatter = new Intl.DateTimeFormat("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: "America/La_Paz" });
+
+export default function MeasurementChart({ rows, parameter, unit, timeWindow }: {
+  rows: Measurement[];
+  parameter: Parameter;
+  unit: string;
+  timeWindow?: { start: number; end: number; gapMs: number };
+}) {
   const info = parameterInfo[parameter];
-  const points = [...rows].sort((a, b) => Date.parse(a.received_at) - Date.parse(b.received_at)).map((row) => ({
-    time: Date.parse(row.received_at),
-    value: sensorSample(row, parameter)?.value ?? null,
-  }));
-  const timeLabel = (value: number) => new Date(value).toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: "America/La_Paz" });
-  return <div className="h-56 w-full" role="img" aria-label={`Evolución de ${info.label} en ${unit}. Los datos también están en la tabla de historial.`}>
+  const start = timeWindow?.start ?? -Infinity;
+  const end = timeWindow?.end ?? Infinity;
+  const gapMs = timeWindow?.gapMs ?? Infinity;
+  const points = useMemo(() => {
+    const readings = rows.map((row) => ({ row, time: Date.parse(row.received_at) }))
+      .filter(({ time }) => time >= start && time <= end).sort((a, b) => a.time - b.time);
+    const result: { time: number; value: number | null }[] = [];
+    let previous: number | undefined;
+    for (const { row, time } of readings) {
+      if (previous !== undefined && time - previous > gapMs) result.push({ time: previous + 1, value: null });
+      result.push({ time, value: sensorSample(row, parameter)?.value ?? null });
+      previous = time;
+    }
+    return result;
+  }, [rows, parameter, start, end, gapMs]);
+  const dark = Boolean(timeWindow);
+  const ink = dark ? "#aab6c5" : "#64748b";
+  const timeLabel = (value: number) => timeFormatter.format(value);
+  const hasData = points.some((point) => point.value !== null);
+  if (dark && !hasData) return <div className="flex h-52 items-center justify-center px-4 text-center text-sm text-slate-400">Sin lecturas disponibles en las últimas 2 h.</div>;
+
+  return <div className={dark ? "h-52 w-full" : "h-56 w-full"} aria-label={`Evolución de ${info.label} en ${unit}. Los datos también están en la tabla de historial.`}>
     <ResponsiveContainer width="100%" height="100%"><LineChart data={points} margin={{ top: 10, right: 8, bottom: 0, left: 0 }} accessibilityLayer>
-      <CartesianGrid stroke="#e8eef3" strokeDasharray="3 5" vertical={false} />
-      <XAxis dataKey="time" type="number" domain={["dataMin", "dataMax"]} tickFormatter={timeLabel} minTickGap={50} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#64748b" }} />
-      <YAxis width={48} domain={["auto", "auto"]} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#64748b" }} />
-      <Tooltip labelFormatter={(label) => timeLabel(Number(label))} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
-      <Line type="linear" dataKey="value" name={`${info.label} (${unit})`} stroke={info.color} strokeWidth={2} dot={{ r: 2, strokeWidth: 0 }} connectNulls={false} isAnimationActive={false} />
+      <CartesianGrid stroke={dark ? "#35404c" : "#e8eef3"} strokeDasharray={dark ? undefined : "3 5"} vertical={dark} />
+      <XAxis dataKey="time" type="number" domain={timeWindow ? [timeWindow.start, timeWindow.end] : ["dataMin", "dataMax"]} allowDataOverflow={dark}
+        ticks={timeWindow ? [1, 2, 3].map((step) => timeWindow.start + (timeWindow.end - timeWindow.start) * step / 4) : undefined}
+        tickFormatter={timeLabel} minTickGap={36} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: ink }} />
+      <YAxis width={46} domain={["auto", "auto"]} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: ink }} />
+      <Tooltip labelFormatter={(label) => timeLabel(Number(label))} contentStyle={{ borderRadius: 8, fontSize: 12,
+        ...(dark ? { background: "#172131", borderColor: "#435368", color: "#eff4fa" } : {}) }} />
+      <Line type="linear" dataKey="value" name={`${info.label} (${unit})`} stroke={dark ? "#75aaff" : info.color} strokeWidth={dark ? 1.5 : 2}
+        dot={!dark || points.length <= 40 ? { r: 2, strokeWidth: 0 } : false} connectNulls={false} isAnimationActive={false} />
     </LineChart></ResponsiveContainer>
   </div>;
 }
