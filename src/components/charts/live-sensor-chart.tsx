@@ -1,10 +1,12 @@
 "use client";
 import { useMemo, useState } from "react";
+import { useWindowTime } from "@/hooks/use-window-time";
 import Link from "next/link";
 import { Activity, ArrowUpRight } from "lucide-react";
 import { parameterInfo } from "@/config/parameters";
 import { formatDate, formatNumber } from "@/lib/utils/format";
 import { sensorSample } from "@/lib/utils/sensor-analysis";
+import { sensorHealth } from "@/lib/utils/sensor-health";
 import { StreamingTrace } from "./streaming-trace";
 import type { Measurement, Parameter } from "@/types/domain";
 
@@ -17,9 +19,10 @@ export default function LiveSensorChart({ rows, parameter, intervalSeconds, conn
     .map(row => ({ row, time: Date.parse(row.received_at), sample: sensorSample(row, parameter) })), [rows, parameter]);
   const last = entries.at(-1);
   const sample = last?.sample;
+  const health = sensorHealth(rows, parameter, 65535, intervalSeconds);
   const original = sample?.original ?? entries.findLast(entry => entry.sample)?.sample?.original;
-  const points = useMemo(() => entries.map(entry => ({ time: entry.time, value: entry.sample?.original === original ? entry.sample?.value ?? null : null })), [entries, original]);
-  const end = connected ? Date.now() : last?.time ?? Date.now();
+  const points = entries.map(entry => ({ time: entry.time, value: entry.sample?.original === original ? entry.sample?.value ?? null : null }));
+  const end = useWindowTime(connected, last?.time);
   const values = points.filter(point => point.time >= end - minutes * 60_000 && point.value !== null).map(point => point.value as number);
   const min = values.length ? Math.min(...values) : null;
   const max = values.length ? Math.max(...values) : null;
@@ -30,6 +33,7 @@ export default function LiveSensorChart({ rows, parameter, intervalSeconds, conn
       <div><h2 className="text-xl font-bold">{info.label}</h2><p className="mt-1 text-xs muted">{parameter === "temperature_c" ? "Temperatura medida por la sonda" : parameter === "gas_adc" ? "Respuesta del MQ-135 · ADC, no CO₂ en ppm" : "Respuesta del LDR · ADC, no lux"}</p></div>
       <span className={connected && sample ? "badge badge-ok" : "badge"}><Activity size={13} />{connected && sample ? "En vivo" : connected ? "Esperando lectura" : "Últimos datos"}</span>
     </header>
+    {health && <div role="status" className="message mt-4"><p className="font-semibold">{health.title}</p><p className="mt-1 text-sm">{health.message}</p></div>}
     <div className="my-6 flex flex-wrap items-end justify-between gap-6">
       <div><p className="text-xs muted">Última lectura</p><p className="mt-2 text-5xl font-semibold tracking-tight tabular-nums" style={{ color: info.color }}>{formatNumber(sample?.value, info.decimals)} <span className="text-lg font-normal muted">{info.unit}</span></p><p className="mt-2 text-xs muted">{delta === null ? "Esperando lecturas consecutivas" : (delta > 0 ? "+" : "") + formatNumber(delta, info.decimals) + " " + info.unit + " respecto a la anterior"}</p></div>
       <div className="flex flex-wrap gap-6 text-sm"><div><p className="text-xs muted">Mínima</p><p className="mt-1 font-semibold tabular-nums">{formatNumber(min, info.decimals)} {info.unit}</p></div><div><p className="text-xs muted">Máxima</p><p className="mt-1 font-semibold tabular-nums">{formatNumber(max, info.decimals)} {info.unit}</p></div><label className="text-xs">Ventana<select value={minutes} onChange={event => setMinutes(Number(event.target.value))}>{[2, 5, 10].map(value => <option key={value} value={value}>{value} minutos</option>)}</select></label></div>

@@ -1,0 +1,17 @@
+.git/
+.vercel/
+node_modules/
+.next/
+.local-run/
+.npm-cache/
+.env*
+firmware/
+entregables/
+docs/
+coverage/
+out/
+dist/
+*.log
+*.tsbuildinfo
+__pycache__/
+*.pyc

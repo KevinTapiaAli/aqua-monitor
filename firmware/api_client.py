@@ -31,7 +31,9 @@ class ApiClient:
             reason = "memoria insuficiente"
         else:
             message = str(exc).upper()
-            if code == -9984 or any(marker in message for marker in (
+            if code == -15104:
+                reason = "TLS: clave publica invalida (MBEDTLS_ERR_PK_INVALID_PUBKEY); revisar compatibilidad TLS/cadena del servidor"
+            elif code == -9984 or any(marker in message for marker in (
                 "CERTIFICATE_VERIFY_FAILED", "CERTIFICATE VERIFY FAILED",
                 "CERTIFICATE VERIFICATION FAILED", "CERTIFICATE HAS EXPIRED",
             )):

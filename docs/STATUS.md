@@ -1,4 +1,15 @@
-# Estado actual: cambio ambiental — 19/10/2026
+# Estado actual — 25/11/2026
+
+- Entrega actual: tres sensores (temperatura, luz, gas), interpretación de luz 0/1, gas en porcentaje de escala, gráficas continuas, privacidad y documentación del equipo. Humedad se conserva solo por compatibilidad de datos.
+- Next.js y eslint-config-next actualizados a 16.4.6. `npm audit fix --ignore-scripts` aplicó actualizaciones compatibles sin --force; auditoría resultante: cero vulnerabilidades conocidas reportadas en esta fecha.
+- TypeScript (`tsc --noEmit --incremental false`) y lint finalizados sin errores. Se corrigió el uso del reloj durante render en las gráficas; las estadísticas avanzan con un temporizador con limpieza.
+- Vercel: sesión del propietario y proyecto `kevin-tapia-ali/aqua-monitor` confirmados, repositorio GitHub correcto, rama de producción main, Node 24. Las cuatro variables necesarias existen en producción como secretos; no se imprimieron ni publicaron.
+- Entorno local no contiene las tres variables de Supabase; no se afirma consulta directa de PostgreSQL ni auditoría de políticas instaladas. Usuario confirmó migración ambiental aplicada. No se ejecutaron migraciones nuevas ni se borraron datos.
+- Usuario confirmó lecturas físicas. Su última captura web seguía mostrando una recepción antigua; pendiente HTTP 201 reciente, historial correspondiente y diagnóstico TLS -15104. El programa físico de la captura difiere del integrado en el repositorio: respaldarlo antes de reemplazarlo.
+- No hubo simulación de sensores, cambios físicos, pruebas E2E ni servidor de desarrollo iniciado por esta actualización. Las pruebas de aislamiento entre usuarios y el circuito completo siguen pendientes.
+- README y `docs/TERCER_PARCIAL.md` explican alcance actual, seguridad, fuentes, evidencias y la diferencia entre la rúbrica Python y el dashboard Next.js.
+
+## Registro histórico: cambio ambiental — 19/10/2026
 
 - Preparado localmente: dashboards, historial, CSV, configuración, API/tipos y firmware para temperatura, humedad del suelo tipo YL-69, MQ-135 y LDR.
 - Temperatura física y HTTP 201 confirmados por el usuario antes de este cambio. Se conserva su adaptador GPIO 4 y su calidad sin calibrar.

@@ -15,6 +15,7 @@ import { deviceStatus, statusLabels } from "@/lib/utils/device-status";
 import { formatDate } from "@/lib/utils/format";
 import { parameterInfo } from "@/config/parameters";
 import { sensorSample } from "@/lib/utils/sensor-analysis";
+import { ReadableSensorPanel } from "./readable-sensor-panel";
 
 const sensorTabs = [
   { parameter: "temperature_c", icon: Thermometer },
@@ -26,7 +27,7 @@ const LiveSensorChart = dynamic(() => import("@/components/charts/live-sensor-ch
 
 export function Overview() {
   const { device } = useDevices();
-  return <><div><h1 className="text-3xl font-bold tracking-tight">Análisis por sensor</h1><p className="mt-2 text-sm muted">De cada lectura a su evolución: explora los datos reales de tu estación.</p></div>
+  return <><div><h1 className="text-3xl font-bold tracking-tight">Tu ambiente, en vivo</h1><p className="mt-2 text-sm muted">Selecciona temperatura, luz o gas para ver su última lectura y evolución.</p></div>
     {device ? <StationOverview key={device.id} initialDevice={device} /> : <EmptyState title="Tu primera estación comienza aquí"><p>Registra un dispositivo y prepara su conexión para recibir mediciones reales.</p><Link className="btn mt-5" href="/dashboard/devices">Registrar dispositivo <ArrowUpRight size={16} /></Link></EmptyState>}
   </>;
 }
@@ -38,6 +39,7 @@ function StationOverview({ initialDevice }: { initialDevice: Device }) {
   const [parameter, setParameter] = useState<Parameter>("temperature_c");
   const status = deviceStatus(live.device, live.now);
   const latest = live.rows[0];
+  const receivedSensors = latest ? sensorTabs.filter(({ parameter: p }) => sensorSample(latest, p) !== null).length : 0;
   const sensorAlerts = live.alerts.filter((alert) => alert.parameter === parameter);
   async function acknowledge(id: string) {
     setBusyId(id); setActionError("");
@@ -51,15 +53,20 @@ function StationOverview({ initialDevice }: { initialDevice: Device }) {
     {live.error && <div role="alert" className="message message-error flex flex-wrap items-center justify-between gap-3">{live.error}<button className="btn btn-secondary" onClick={live.retry}><RefreshCw size={15} /> Reintentar</button></div>}
     {live.loading && <p role="status" className="text-sm muted">Cargando mediciones…</p>}
     <nav className="grid gap-2 sm:grid-cols-3" aria-label="Seleccionar sensor para analizar">{sensorTabs.map(({ parameter: p, icon: Icon }) => {
-      const hasData = live.rows.some((row) => sensorSample(row, p) !== null);
-      return <button key={p} type="button" aria-pressed={parameter === p} onClick={() => setParameter(p)} className={`flex items-center gap-3 rounded-xl border px-4 py-4 text-left transition-colors ${parameter === p ? "border-cyan-700 bg-[#123446] text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-cyan-400"}`}><Icon size={20} aria-hidden="true" /><span><span className="block text-sm font-semibold">{parameterInfo[p].label}</span><span className={`mt-1 block text-[11px] ${parameter === p ? "text-slate-300" : "text-slate-500"}`}>{hasData ? "Ver análisis" : "Sin lecturas disponibles"}</span></span></button>;
+      const hasData = latest ? sensorSample(latest, p) !== null : false;
+      const stateLabel = hasData ? "Lectura recibida · ver detalle" : latest?.quality[p] === "sensor_error" ? "Error informado por la placa" : "Sin lectura en la última recepción";
+      return <button key={p} type="button" aria-pressed={parameter === p} onClick={() => setParameter(p)} className={`flex items-center gap-3 rounded-xl border px-4 py-4 text-left transition-colors ${parameter === p ? "border-cyan-700 bg-[#123446] text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-cyan-400"}`}><Icon size={20} aria-hidden="true" /><span><span className="block text-sm font-semibold">{parameterInfo[p].label}</span><span className={`mt-1 block text-[11px] ${parameter === p ? "text-slate-300" : "text-slate-500"}`}>{stateLabel}</span></span></button>;
     })}</nav>
+    {latest && <p className="text-sm muted"><strong>{receivedSensors} de 3 variables</strong> contienen un número en la última recepción. La estación puede estar conectada aunque un sensor falle; recibir un número tampoco confirma su exactitud.</p>}
     <div className="flex flex-wrap justify-between gap-2 text-xs muted"><p>Última recepción: {formatDate(latest?.received_at)}</p><p>Adquisición: {latest?.measured_at ? formatDate(latest.measured_at) : "Sin hora confirmada por el dispositivo"}</p></div>
-    {latest?.measured_at && live.now - Date.parse(latest.measured_at) > Math.max(30, live.device.expected_interval_seconds * 3) * 1000 && <p className="message">La última muestra fue adquirida hace más tiempo que el intervalo esperado. Puede ser una lectura pendiente transmitida después de una desconexión.</p>}
+    {latest?.measured_at && live.now - Date.parse(latest.measured_at) > Math.max(30, live.device.expected_interval_seconds * 3) * 1000 && <p className="message">La fecha de adquisición parece atrasada. Puede ser una lectura pendiente o un reloj de la placa desajustado. El ESP32 debe guardar UTC; la web muestra hora de Bolivia. El historial se ordena por recepción.</p>}
     {status !== "online" && latest && <p className="message">Estos indicadores corresponden a la última lectura almacenada. El dispositivo no está transmitiendo recientemente.</p>}
     {!live.loading && !latest && <p className="message">Aún no hay lecturas. La estación aparecerá conectada cuando la API reciba datos válidos.</p>}
 
-    <LiveSensorChart key={parameter} parameter={parameter} rows={live.rows} intervalSeconds={live.device.expected_interval_seconds} connected={status === "online" && live.connection === "En vivo"} />
+    {(parameter === "light_adc" || parameter === "gas_adc") ? <>
+      <ReadableSensorPanel key={parameter} parameter={parameter} rows={live.rows} intervalSeconds={live.device.expected_interval_seconds} connected={status === "online" && live.connection === "En vivo"} />
+      <details className="panel"><summary className="cursor-pointer font-semibold">Ver análisis original en ADC</summary><LiveSensorChart key={parameter} parameter={parameter} rows={live.rows} intervalSeconds={live.device.expected_interval_seconds} connected={status === "online" && live.connection === "En vivo"} /></details>
+    </> : <LiveSensorChart key={parameter} parameter={parameter} rows={live.rows} intervalSeconds={live.device.expected_interval_seconds} connected={status === "online" && live.connection === "En vivo"} />}
     <details className="panel"><summary className="cursor-pointer text-sm font-semibold">Alertas del sensor ({sensorAlerts.length})</summary><div className="mt-4 mb-5 flex flex-wrap items-center gap-2"><Bell size={18} className="text-cyan-700" aria-hidden="true" /><h2 className="font-semibold">Alertas de {parameterInfo[parameter].label.toLowerCase()}</h2><span className="badge">{sensorAlerts.length}</span><button className="btn btn-secondary ml-auto" onClick={live.retry} disabled={live.loading}>Actualizar pendientes</button></div>
       {actionError && <p role="alert" className="message message-error mb-4">{actionError}</p>}
       {live.alerts.length === 50 && <p className="mb-3 text-xs muted">Se muestran las coincidencias entre las 50 alertas pendientes más recientes de la estación.</p>}

@@ -45,8 +45,9 @@ export function LdrDigitalPanel({ rows }: { rows: Measurement[] }) {
       <div>
         <h2 className="text-xl font-semibold">LDR digital</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Lectura DO desde GPIO 34. Estado 0 o 1;
-          la polaridad de luz y oscuridad está pendiente.
+          Estado 0 o 1 enviado por el dispositivo. El circuito utiliza una salida
+          analógica en GPIO 34; este estado puede haber sido calculado en el programa.
+          Su umbral y polaridad deben corresponder al firmware que lo produjo.
         </p>
       </div>
 

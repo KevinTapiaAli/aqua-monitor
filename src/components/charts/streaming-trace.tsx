@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 export type TracePoint = { time: number; value: number | null };
 const clock = new Intl.DateTimeFormat("es-BO", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "America/La_Paz" });
 
-export function StreamingTrace({ points, color, unit, decimals, duration, interval, connected, label }: {
-  points: TracePoint[]; color: string; unit: string; decimals: number; duration: number; interval: number; connected: boolean; label: string;
+export function StreamingTrace({ points, color, unit, decimals, duration, interval, connected, label, step = false }: {
+  points: TracePoint[]; color: string; unit: string; decimals: number; duration: number; interval: number; connected: boolean; label: string; step?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const endRef = useRef(0);
@@ -34,18 +34,19 @@ export function StreamingTrace({ points, color, unit, decimals, duration, interv
       const minimum = values.length ? Math.min(...values) : 0;
       const maximum = values.length ? Math.max(...values) : 1;
       const pad = Math.max((maximum - minimum) * 0.18, unit === "°C" ? 0.5 : 10);
-      const low = minimum - pad, high = maximum + pad;
+      const low = step ? 0 : unit === "% de escala" ? 0 : minimum - pad, high = step ? 1 : unit === "% de escala" ? 100 : maximum + pad;
       const x = (time: number) => left + (time - start) / duration * plotWidth;
       const y = (value: number) => bottom - (value - low) / (high - low) * (bottom - top);
       ctx.clearRect(0, 0, width, height);
       ctx.fillStyle = "#f8fbfd"; ctx.fillRect(left, top, plotWidth, bottom - top);
       ctx.font = "11px system-ui";
       ctx.lineWidth = 1;
-      for (let i = 0; i <= 4; i++) {
-        const yy = top + (bottom - top) * i / 4;
+      const divisions = step ? 1 : 4;
+      for (let i = 0; i <= divisions; i++) {
+        const yy = top + (bottom - top) * i / divisions;
         ctx.strokeStyle = "#e2eaf0"; ctx.beginPath(); ctx.moveTo(left, yy); ctx.lineTo(right, yy); ctx.stroke();
         ctx.fillStyle = "#64748b"; ctx.textAlign = "right";
-        ctx.fillText(number.format(high - (high - low) * i / 4), left - 8, yy + 4);
+        ctx.fillText(number.format(high - (high - low) * i / divisions), left - 8, yy + 4);
       }
       const tick = duration / (width < 500 ? 3 : 5);
       ctx.textAlign = "center";
@@ -61,7 +62,7 @@ export function StreamingTrace({ points, color, unit, decimals, duration, interv
         if (point.time > end) break;
         if (point.value === null) { previous = undefined; continue; }
         if (!previous || point.time - previous.time > gapLimit) ctx.moveTo(x(point.time), y(point.value));
-        else ctx.lineTo(x(point.time), y(point.value));
+        else { if (step && previous.value !== null) ctx.lineTo(x(point.time), y(previous.value)); ctx.lineTo(x(point.time), y(point.value)); }
         previous = point;
       }
       ctx.stroke();
@@ -92,6 +93,6 @@ export function StreamingTrace({ points, color, unit, decimals, duration, interv
     resize.observe(canvas); resume();
     document.addEventListener("visibilitychange", resume); reduced.addEventListener("change", resume);
     return () => { cancelAnimationFrame(frame); resize.disconnect(); document.removeEventListener("visibilitychange", resume); reduced.removeEventListener("change", resume); };
-  }, [points, color, unit, decimals, duration, interval, connected]);
+  }, [points, color, unit, decimals, duration, interval, connected, step]);
   return <canvas ref={canvasRef} className="block h-72 w-full sm:h-96" role="img" aria-label={label}>Los valores están disponibles en Últimas lecturas.</canvas>;
 }

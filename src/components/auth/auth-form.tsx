@@ -1,4 +1,5 @@
 import { AuthFields } from "./auth-fields";
+import Link from "next/link";
 import { hasPublicConfig } from "@/lib/supabase/env";
 import { authNotices, type AuthAction, type AuthSearchParams } from "@/lib/auth/form-state";
 
@@ -16,6 +17,7 @@ export async function AuthForm({ title, description, searchParams, children, ...
     <p className="mt-3 text-sm leading-6 muted">{description}</p>
     {feedback && <p role={feedback.error ? "alert" : "status"} className={`message mt-5 ${feedback.error ? "message-error" : ""}`}>{feedback.message}</p>}
     <AuthFields {...fields} configured={hasPublicConfig()} />
+    <p className="my-4 text-xs muted">Consulta cómo usamos la información en <Link className="text-cyan-800 underline" href="/privacy">Privacidad y uso de datos</Link>.</p>
     <div className="space-y-4 border-t border-slate-200 pt-6 text-sm muted">{children}</div>
   </>;
 }
