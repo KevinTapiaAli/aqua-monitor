@@ -14,10 +14,12 @@ El ESP32 no usa una cuenta humana: recibe un token `aq_<uuid_dispositivo>.<secre
 | Dispositivo asociado | Leer; editar campos administrativos/especificaciones | Leer | Sin acceso directo |
 | Membresías | Consultar asociaciones de su dispositivo | Consultar su asociación | Sin acceso |
 | Mediciones | Leer | Leer | Solo ingesta validada mediante API |
-| Reglas | Leer, crear y editar límites | Leer | Sin acceso |
-| Calibraciones | Leer y agregar evidencia | Leer | Sin acceso |
+| Umbrales | Leer, crear y editar límites | Sin acceso | Sin acceso |
+| Calibraciones | Leer y agregar evidencia | Sin acceso | Sin acceso |
 | Alertas | Leer y reconocer mediante RPC | Leer | Sin acceso |
 | Credenciales privadas | Crear/rotar/revocar mediante RPC | Sin acceso | Sin lectura del verificador |
+
+La migración [202611260002_observer_read_only.sql](../supabase/migrations/202611260002_observer_read_only.sql) reserva la lectura de umbrales y calibraciones al propietario de la estación.
 
 Las tablas públicas tienen RLS explícito y grants por columna en mutaciones. No se permite cambiar `owner_id`, `last_received_at`, autoría o IDs mediante PATCH. Mediciones y alertas no tienen políticas de inserción desde el navegador.
 
