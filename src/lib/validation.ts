@@ -120,3 +120,8 @@ export const measurementQuerySchema = z.object({
 });
 export const profileSchema = z.strictObject({ display_name: z.string().trim().min(1).max(100) });
 export const observerSchema = z.strictObject({ user_id: uuidSchema });
+export const privacyDetailsSchema = z.strictObject({
+  responsible_name: z.string().trim().min(1).max(100),
+  contact_email: z.string().trim().max(254).pipe(z.email()).nullable(),
+  retention_months: z.number().int().min(1).max(2_147_483_647).nullable(),
+});

@@ -36,9 +36,17 @@ Crea usuarios A y B y un dispositivo D propiedad de A. Con la sesión B, intenta
 Desde la cuenta A, selecciona D y concede acceso a B en **Configuración → Gestionar observadores** con el identificador del perfil de B. En sesiones separadas, comprueba lo siguiente:
 
 - A ve el modo Administrador. B ve el modo Observador para D y puede consultar Realtime, filtrar el historial y exportar CSV.
+- B ve **Mi perfil** y la etiqueta **Observador · solo lectura**. La navegación omite Dispositivos y, al abrir `/dashboard/devices` directamente, B no ve el formulario de registro ni controles de tokens.
 - B recibe 403 al llamar a la API de observadores para D. La RLS también impide que B cree o borre membresías de D desde Supabase.
-- B sigue sin poder cambiar configuración, rotar credenciales ni reconocer alertas de D.
+- B sigue sin poder cambiar configuración, crear o editar umbrales, rotar o revocar credenciales ni reconocer alertas de D. Las consultas de umbrales y calibraciones de D devuelven listas vacías.
+- Si B solo tiene membresías de observador, el registro de estaciones falla tanto en `POST /api/v1/devices` como en la RPC `register_device`. Una cuenta sin estaciones puede registrar la primera. Una cuenta que posee una estación y observa otra conserva sus permisos de propietario para su propia estación.
 - A puede repetir la concesión sin duplicar la membresía. Después de que A quita el acceso, B pierde acceso a nuevas consultas y eventos. D deja de aparecer al recargar.
+
+## Privacidad del proyecto
+
+- Abre `/privacy` sin iniciar sesión. Comprueba que aparecen los datos del responsable y el texto de cookies y solicitudes.
+- Con la cuenta designada para privacidad, guarda datos de prueba desde **Configuración → Privacidad del proyecto** y recarga la página pública. Comprueba que los tres campos se actualizaron.
+- Con un observador o un propietario que no tiene el permiso de privacidad, comprueba que el formulario no aparece y que `PUT /api/v1/privacy-details` devuelve 403.
 
 ## Ingesta (entorno separado de pruebas)
 

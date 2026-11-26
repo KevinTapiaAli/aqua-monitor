@@ -71,6 +71,8 @@ En el SQL Editor de un proyecto Supabase vacío, ejecuta una vez, en este orden:
 3. `supabase/migrations/202610120003_registration_profiles.sql`
 4. `supabase/migrations/202610190001_environmental_sensors.sql`
 5. `supabase/migrations/202611260001_observer_access.sql`
+6. `supabase/migrations/202611260002_observer_read_only.sql`
+7. `supabase/migrations/202611260003_privacy_details.sql`
 
 Cada archivo contiene su propia transacción. No vuelvas a aplicar la migración inicial sobre tablas ya creadas. Si administras migraciones con Supabase CLI, usa su mecanismo de historial en lugar de mezclarlo con ejecuciones manuales; identifica como aplicadas las migraciones que hayas ejecutado previamente.
 
@@ -78,7 +80,22 @@ La primera migración habilita RLS y añade `measurements`, `alerts` y `devices`
 
 No hay contraseñas de usuarios en tablas personalizadas. Auth administra sus propios usuarios. El perfil complementario se crea al guardar el nombre; registrar un dispositivo crea automáticamente la asociación del propietario.
 
-En una instalación existente que ya recibió las migraciones anteriores, aplica la 202611260001 para habilitar la gestión de observadores. El observador inicia sesión y copia su identificador desde **Configuración → Perfil de usuario**. El administrador selecciona su estación y lo ingresa en **Configuración → Gestionar observadores**. El permiso se concede por estación. El mismo panel permite quitar el acceso.
+En una instalación existente, aplica en orden las migraciones de observadores que falten. La 202611260001 habilita la gestión de observadores y la 202611260002 limita el registro de dispositivos y la consulta de ajustes para cuentas observadoras. El observador copia su identificador desde **Mi perfil → Perfil de usuario**. El administrador selecciona su estación y lo ingresa en **Configuración → Gestionar observadores**. El mismo panel permite quitar el acceso.
+
+### Administración de privacidad
+
+La migración 202611260003 agrega los datos públicos de privacidad. El responsable inicial se muestra como ejemplo. El correo y el plazo aparecen como **Por confirmar** hasta que el equipo complete los datos reales.
+
+En Supabase **Authentication → Users**, identifica el UUID de la cuenta del responsable. Un administrador de Supabase puede otorgarle el permiso ejecutando en el SQL Editor el siguiente bloque con su UUID real:
+
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
+  || '{"aqua_privacy_admin": true}'::jsonb
+where id = 'UUID_DE_LA_CUENTA_RESPONSABLE'::uuid;
+```
+
+El responsable entra con su cuenta y completa **Configuración → Privacidad del proyecto**. El formulario actualiza el nombre, el correo y el plazo en meses en `/privacy`. El plazo es informativo y el equipo gestiona la eliminación de datos. Ser propietario de una estación por sí solo no concede este permiso. Para retirarlo, el administrador de Supabase elimina `aqua_privacy_admin` de los metadatos de aplicación de esa cuenta.
 
 ## 4. Autenticación y correo
 

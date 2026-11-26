@@ -55,7 +55,7 @@ input[aria-invalid="true"] { border-color: #be123c; }
 .monitor-shell .panel select, .monitor-shell .monitor-analysis select { background: white; border-color: #cbd5e1; color: #183344; }
 .monitor-role {
   border: 1px solid #425d76; border-radius: 999px; padding: .26rem .7rem;
-  margin-bottom: .45rem; color: #b8d8fb; background: #1d2d40; font-size: .75rem;
+  color: #d3e9ff; background: #253953; font-size: .75rem; font-weight: 700;
 }
 .monitor-card { background: #1a222d; border: 1px solid #303c4c; border-radius: .8rem; }
 .monitor-status {

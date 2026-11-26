@@ -11,9 +11,9 @@ import { displayParameters as parameters, parameterInfo } from "@/config/paramet
 import { type AlertRule, type Device, type Parameter } from "@/types/domain";
 import { ObserverAccess } from "@/components/devices/observer-access";
 
-export function SettingsView({ displayName }: { displayName: string }) {
+export function SettingsView({ displayName, privacyPanel }: { displayName: string; privacyPanel?: React.ReactNode }) {
   const router = useRouter();
-  const { device, userId } = useDevices();
+  const { device, stationRole, userId } = useDevices();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -24,10 +24,11 @@ export function SettingsView({ displayName }: { displayName: string }) {
     catch (e) { setError(e instanceof Error ? e.message : "No se pudo guardar."); }
     finally { setBusy(false); }
   }
-  return <><div><h1 className="text-3xl font-bold">Configuración</h1><p className="mt-2 text-sm muted">Tu perfil, los umbrales y la trazabilidad de los sensores.</p></div>
+  return <><div><h1 className="text-3xl font-bold">{stationRole === "observer" ? "Mi perfil" : "Configuración"}</h1></div>
     <section className="panel"><h2 className="mb-4 font-semibold">Perfil de usuario</h2><form className="flex flex-wrap items-end gap-4" onSubmit={saveProfile}><label className="max-w-sm grow">Nombre para mostrar<input name="display_name" defaultValue={displayName} required maxLength={100} /></label><button disabled={busy} className="btn"><Save size={15} /> Guardar perfil</button></form><p className="mt-4 break-all text-xs muted">Identificador de usuario: {userId}</p>{message && <p role="status" className="message mt-4">{message}</p>}{error && <p role="alert" className="message message-error mt-4">{error}</p>}</section>
     <section className="panel flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-semibold">Seguridad de tu cuenta</h2><p className="mt-2 text-sm muted">Recibe un enlace en tu correo para cambiar tu contraseña.</p></div><Link href="/forgot-password" className="btn btn-secondary">Cambiar contraseña</Link></section>
-    {device && (device.owner_id === userId ? <>
+    {privacyPanel}
+    {device && (stationRole === "admin" ? <>
       <section className="panel"><h2 className="font-semibold">Acceso a {device.name}</h2><ObserverAccess key={device.id} deviceId={device.id} /></section>
       <StationSettings key={device.id} device={device} />
     </> : <p className="message">Eres observador de {device.name}. Puedes consultar y exportar sus lecturas en Historial.</p>)}

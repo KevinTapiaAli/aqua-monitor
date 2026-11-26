@@ -6,6 +6,7 @@ import {
   deviceUpdateSchema,
   ingestSchema,
   observerSchema,
+  privacyDetailsSchema,
   profileSchema,
   ruleSchema,
   sensorLimitsSchema,
@@ -141,7 +142,7 @@ export function openApiDocument() {
         },
         post: {
           tags: ["Dispositivos"], operationId: "registerDevice", summary: "Registrar un dispositivo y emitir su token",
-          description: "La sesión actual se convierte en propietaria. El token se entrega una sola vez; guarda únicamente su verificador en PostgreSQL. Requiere Origin igual a APP_URL.",
+          description: "Disponible para cuentas nuevas o propietarias de alguna estación. Una cuenta con acceso exclusivamente de observador recibe 403. La sesión actual se convierte en propietaria de la nueva estación. El token se entrega una sola vez. Requiere Origin igual a APP_URL.",
           requestBody: body("DeviceCreate"), responses: responses(object({ id: uuid, token: { type: "string", description: "Secreto individual. No se puede consultar de nuevo." } }), 201, [400, 401, 403, 409, 413, 415, 422, 500, 503]),
         },
       },
@@ -209,6 +210,7 @@ export function openApiDocument() {
       "/api/v1/alert-rules": {
         get: {
           tags: ["Configuración"], operationId: "listAlertRules", summary: "Consultar umbrales de una estación",
+          description: "Devuelve los umbrales al propietario de la estación.",
           parameters: [deviceQuery], responses: responses(array("AlertRule")),
         },
         put: {
@@ -220,6 +222,7 @@ export function openApiDocument() {
       "/api/v1/calibrations": {
         get: {
           tags: ["Configuración"], operationId: "listCalibrations", summary: "Consultar las 100 calibraciones más recientes",
+          description: "Devuelve las calibraciones al propietario de la estación.",
           parameters: [deviceQuery], responses: responses(array("Calibration")),
         },
         post: {
@@ -235,6 +238,14 @@ export function openApiDocument() {
           requestBody: body("ProfileInput"), responses: responses(object({ id: uuid, display_name: { type: "string" }, created_at: timestamp }), 200, [400, 401, 403, 409, 413, 415, 422, 500, 503]),
         },
       },
+      "/api/v1/privacy-details": {
+        put: {
+          tags: ["Configuración"], operationId: "savePrivacyDetails", summary: "Actualizar los datos públicos de privacidad",
+          description: "Requiere una cuenta con permiso de administración de privacidad y Origin igual a APP_URL.",
+          requestBody: body("PrivacyDetailsInput"),
+          responses: responses(ref("PrivacyDetailsInput"), 200, [400, 401, 403, 413, 415, 422, 500, 503]),
+        },
+      },
     },
     components: {
       securitySchemes: {
@@ -246,6 +257,7 @@ export function openApiDocument() {
         DeviceCreate: fromZod(deviceSchema),
         DeviceUpdate: fromZod(deviceUpdateSchema),
         ObserverAccount: fromZod(observerSchema),
+        PrivacyDetailsInput: fromZod(privacyDetailsSchema),
         AlertRuleInput: rule,
         CalibrationInput: calibration,
         ProfileInput: fromZod(profileSchema),

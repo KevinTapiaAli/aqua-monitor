@@ -68,7 +68,7 @@ export function Overview() {
 }
 
 function StationOverview({ initialDevice }: { initialDevice: Device }) {
-  const { userId } = useDevices();
+  const { stationRole } = useDevices();
   const live = useLiveMeasurements(initialDevice);
   const [actionError, setActionError] = useState("");
   const [busyId, setBusyId] = useState("");
@@ -170,7 +170,7 @@ function StationOverview({ initialDevice }: { initialDevice: Device }) {
         {live.alerts.map((alert) => <li key={alert.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
           <div><p className="font-medium">{parameterInfo[alert.parameter].label} · {alert.kind === "threshold" ? "Umbral" : "Sensor"}</p>
             <p className="mt-1 text-sm text-slate-300">{alert.message}</p><p className="mt-1 text-xs text-slate-400">{formatDate(alert.created_at)}</p></div>
-          {live.device.owner_id === userId && <button className="monitor-action" disabled={Boolean(busyId)} onClick={() => void acknowledge(alert.id)}>Reconocer</button>}
+          {stationRole === "admin" && <button className="monitor-action" disabled={Boolean(busyId)} onClick={() => void acknowledge(alert.id)}>Reconocer</button>}
         </li>)}
       </ul>}
     </details>
