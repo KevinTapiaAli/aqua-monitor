@@ -20,6 +20,7 @@ export function ObserverAccess({ deviceId }: { deviceId: string }) {
         if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "No se pudo consultar el acceso.");
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    // Cancelar la consulta al salir evita que una respuesta antigua actualice el panel de otra estación.
     return () => controller.abort();
   }, [path, revision]);
 
@@ -29,6 +30,7 @@ export function ObserverAccess({ deviceId }: { deviceId: string }) {
     setNotice("");
     try {
       const id = await api<string>(path, { method, body: JSON.stringify({ user_id: userId }) });
+      // La lista local cambia solo tras confirmar la operación en Supabase.
       setObservers((current) => method === "POST" ? [...new Set([...current, id])] : current.filter((entry) => entry !== id));
       setNotice(method === "POST" ? "Acceso de observador concedido." : "Acceso de observador revocado.");
       return true;

@@ -4,8 +4,10 @@ import { displayParameters as parameters, parameterInfo } from "@/config/paramet
 import { type Parameter, type SensorLimits } from "@/types/domain";
 
 export function readSensorLimits(form: FormData, existing: SensorLimits = {}): SensorLimits {
+  // Se conserva el rango histórico de suelo porque este formulario solo edita los sensores ambientales visibles.
   const limits: SensorLimits = existing.soil_adc ? { soil_adc: existing.soil_adc } : {};
   for (const parameter of parameters) {
+    // Los rangos desactivados se omiten del objeto que sustituye las especificaciones de la estación.
     if (form.get(parameter + "_enabled") !== "on") continue;
     const min = Number(form.get(parameter + "_min"));
     const max = Number(form.get(parameter + "_max"));

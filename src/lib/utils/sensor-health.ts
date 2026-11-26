@@ -14,6 +14,7 @@ export function sensorHealth(rows: Measurement[], parameter: Parameter, maximum 
     return { title: "Sin lectura utilizable en la última recepción", message: "No se sustituye el dato por cero ni por una lectura antigua. Consulta el estado del sensor en Thonny." };
   }
   if (parameter === "temperature_c") return null;
+  // Las comprobaciones de saturación y saltos requieren recepciones cercanas para que una pausa no parezca un fallo del sensor.
   const contiguous = recent.every((row, i) => i === 0 || Date.parse(recent[i - 1].received_at) - Date.parse(row.received_at) <= Math.max(30, intervalSeconds * 3) * 1000);
   const values = recent.map(row => sensorSample(row, parameter)?.value ?? null);
   if (contiguous && values.length >= 3 && values.slice(0, 3).every(value => value === maximum)) return {

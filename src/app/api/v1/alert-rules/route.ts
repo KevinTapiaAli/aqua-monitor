@@ -14,9 +14,11 @@ export const PUT = route(async (request) => {
   requireSameOrigin(request);
   const { supabase } = await requireSession();
   const input = ruleSchema.parse(await readJson(request));
+  // La consulta busca la regla única por estación y parámetro. Las políticas de Supabase autorizan la lectura y la escritura.
   const existing = await supabase.from("alert_rules").select("id").eq("device_id", input.device_id).eq("parameter", input.parameter).maybeSingle();
   databaseError(existing.error);
   const values = { unit: parameterInfo[input.parameter].unit, min_value: input.min_value, max_value: input.max_value, enabled: input.enabled };
+  // Actualizar la regla existente conserva su identificador y la referencia de las alertas históricas.
   const result = existing.data
     ? await supabase.from("alert_rules").update(values).eq("id", existing.data.id).select("*").single()
     : await supabase.from("alert_rules").insert({ ...input, ...values }).select("*").single();

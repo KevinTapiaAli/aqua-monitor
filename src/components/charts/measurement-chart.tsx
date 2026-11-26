@@ -23,12 +23,14 @@ export default function MeasurementChart({ rows, parameter, unit, timeWindow }: 
     const result: { time: number; value: number | null }[] = [];
     let previous: number | undefined;
     for (const { row, time } of readings) {
+      // Un punto nulo interrumpe la línea entre recepciones separadas por una pausa.
       if (previous !== undefined && time - previous > gapMs) result.push({ time: previous + 1, value: null });
       result.push({ time, value: sensorSample(row, parameter)?.value ?? null });
       previous = time;
     }
     return result;
   }, [rows, parameter, start, end, gapMs]);
+  // La ventana fija muestra también los periodos sin recepciones. El historial completo ajusta el eje temporal a sus datos.
   const dark = Boolean(timeWindow);
   const ink = dark ? "#aab6c5" : "#64748b";
   const timeLabel = (value: number) => timeFormatter.format(value);

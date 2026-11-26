@@ -20,6 +20,7 @@ export function sensorSample(row: Measurement, parameter: Parameter): SensorSamp
   if (quality !== "ok" && quality !== "uncalibrated") return null;
   let value: unknown = row[parameter];
   let unit: unknown = parameterInfo[parameter].unit;
+  // Las lecturas sin calibrar pueden estar solo en raw. Su unidad original se comprueba antes de mostrarlas.
   if (quality === "uncalibrated" && value == null) {
     const raw = row.raw;
     const entry = raw && typeof raw === "object" && !Array.isArray(raw) ? raw[parameter] : null;
@@ -36,6 +37,7 @@ export function analyzeSensor(rows: Measurement[], parameter: Parameter, count: 
   const ordered = [...rows].sort((a, b) => Date.parse(b.received_at) - Date.parse(a.received_at) || b.id.localeCompare(a.id)).slice(0, count).reverse();
   const entries = ordered.map((row) => ({ row, time: Date.parse(row.received_at), sample: sensorSample(row, parameter) }));
   const lastSample = entries.findLast((entry) => entry.sample)?.sample;
+  // Cada serie usa una sola calidad y unidad para que las diferencias y los resúmenes comparen muestras compatibles.
   const original = mode === "original" || (mode === "auto" && Boolean(lastSample?.original));
   const unit = entries.findLast((entry) => entry.sample?.original === original)?.sample?.unit ?? parameterInfo[parameter].unit;
   const points: { time: number; value: number | null; delta: number | null }[] = [];

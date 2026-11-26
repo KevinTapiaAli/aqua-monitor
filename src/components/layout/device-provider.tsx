@@ -11,8 +11,10 @@ export function DeviceProvider({ initialDevices, userId, children }: { initialDe
   async function refresh() {
     const data = await api<Device[]>("devices");
     setDevices(data);
+    // Si se revocó el acceso a la estación seleccionada, se vuelve a una estación disponible.
     select((current) => data.some((d) => d.id === current) ? current : data[0]?.id ?? "");
   }
+  // La selección determina qué controles muestra la interfaz. El servidor verifica los permisos sobre cada estación.
   return <DeviceContext.Provider value={{ devices, device: devices.find((d) => d.id === selectedId), selectedId, select, refresh, userId }}>{children}</DeviceContext.Provider>;
 }
 export function useDevices() {

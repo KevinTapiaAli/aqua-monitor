@@ -22,11 +22,13 @@ export function DeviceManager() {
     setBusy(true); setError(""); setNotice(""); setToken("");
     try {
       const result = await api<{ id: string; token: string }>("devices", { method: "POST", body: JSON.stringify({ name: form.get("name"), location: form.get("location"), expected_interval_seconds: Number(form.get("interval")) }) });
+      // Guardar la credencial antes de refrescar conserva una copia visible si falla la recarga del listado.
       setToken(result.token); formElement.reset(); await refresh(); select(result.id); setNotice("Dispositivo registrado. Guarda su credencial antes de salir.");
     } catch (e) { setError(e instanceof Error ? e.message : "No se pudo registrar."); }
     finally { setBusy(false); }
   }
   async function change(device: Device, operation: "toggle" | "rotate" | "revoke") {
+    // Rotar o revocar invalida la credencial actual de la placa, por lo que se pide confirmación.
     if (operation !== "toggle" && !window.confirm(operation === "rotate" ? "Se invalidará el token anterior. Tendrás que actualizar el ESP32. ¿Continuar?" : "El ESP32 dejará de poder enviar datos hasta generar una credencial nueva. ¿Revocar?")) return;
     setBusy(true); setError(""); setNotice(""); setToken("");
     try {

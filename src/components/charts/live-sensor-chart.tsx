@@ -20,6 +20,7 @@ export default function LiveSensorChart({ rows, parameter, intervalSeconds, conn
   const last = entries.at(-1);
   const sample = last?.sample;
   const health = sensorHealth(rows, parameter, 65535, intervalSeconds);
+  // La calidad de la última muestra disponible determina la serie para comparar datos con el mismo tratamiento.
   const original = sample?.original ?? entries.findLast(entry => entry.sample)?.sample?.original;
   const points = entries.map(entry => ({ time: entry.time, value: entry.sample?.original === original ? entry.sample?.value ?? null : null }));
   const end = useWindowTime(connected, last?.time);
@@ -27,6 +28,7 @@ export default function LiveSensorChart({ rows, parameter, intervalSeconds, conn
   const min = values.length ? Math.min(...values) : null;
   const max = values.length ? Math.max(...values) : null;
   const previous = entries.at(-2);
+  // El cambio entre muestras solo es interpretable cuando tienen la misma calidad y forman parte del mismo tramo temporal.
   const delta = sample && previous?.sample && sample.original === previous.sample.original && last && last.time - previous.time <= Math.max(30_000, intervalSeconds * 3000) ? sample.value - previous.sample.value : null;
   return <section className="panel min-w-0 !p-4 sm:!p-6">
     <header className="flex flex-wrap items-start justify-between gap-4">

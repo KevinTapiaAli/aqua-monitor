@@ -8,6 +8,7 @@ import type { AuthField, AuthFormState } from "@/lib/auth/form-state";
 
 const emailSchema = z.string().trim().max(254).pipe(z.email("Introduce un correo válido."));
 const passwordSchema = z.string().min(10, "Usa al menos 10 caracteres.").max(128, "Usa como máximo 128 caracteres.");
+// El acceso acepta contraseñas de cuentas existentes. La política de longitud mínima se aplica al crear o cambiar una contraseña.
 const loginSchema = z.object({ email: emailSchema, password: z.string().min(1, "Introduce tu contraseña.").max(128) });
 const resetFields = { password: passwordSchema, confirmPassword: z.string() };
 const passwordsMatch = (value: { password: string; confirmPassword: string }) => value.password === value.confirmPassword;
@@ -27,6 +28,7 @@ function failure(message: string, form: FormData, error?: z.ZodError): AuthFormS
     const field = issue.path[0] as AuthField;
     if (["email", "password", "confirmPassword", "displayName"].includes(field)) (errors[field] ??= []).push(issue.message);
   }
+  // El formulario conserva campos recuperables después de un error y deja las contraseñas fuera de la respuesta.
   return { status: "error", message, values: values(form), errors };
 }
 function authError(error: { code?: string; status?: number }): string {
@@ -57,6 +59,7 @@ export async function login(_previous: AuthFormState, form: FormData): Promise<A
     const { error } = await supabase.auth.signInWithPassword(input.data);
     if (error) return failure(authError(error), form);
   } catch { return failure("No pudimos conectar con el servicio de acceso. Inténtalo nuevamente.", form); }
+  // Next.js implementa redirect lanzando una señal. Fuera del try, la redirección conserva su efecto.
   redirect("/dashboard");
 }
 export async function register(_previous: AuthFormState, form: FormData): Promise<AuthFormState> {
@@ -95,6 +98,7 @@ export async function forgotPassword(_previous: AuthFormState, form: FormData): 
     const { error } = await supabase.auth.resetPasswordForEmail(input.data.email, { redirectTo: origin() + "/auth/callback?next=/reset-password" });
     if (error) return failure(authError(error), form);
   } catch { return failure("No pudimos enviar el enlace. Inténtalo nuevamente.", form); }
+  // La confirmación genérica evita revelar si un correo está registrado.
   return { status: "success", values: values(form), message: "Si existe una cuenta con ese correo, recibirás un enlace para recuperar el acceso. Revisa también la carpeta de correo no deseado." };
 }
 export async function resendConfirmation(_previous: AuthFormState, form: FormData): Promise<AuthFormState> {

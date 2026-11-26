@@ -30,6 +30,7 @@ type Sensor = typeof sensors[number];
 
 function Gauge({ sensor, value, quality }: { sensor: Sensor; value: number | undefined; quality: QualityStatus | undefined }) {
   const { max, bands, parameter } = sensor;
+  // El límite solo afecta la posición de la aguja. El valor numérico sigue mostrando la lectura recibida.
   const position = value === undefined ? null : Math.min(1, Math.max(0, value / max));
   const style = {
     "--band-one": (bands[0] / max * 180) + "deg",
@@ -74,6 +75,7 @@ function StationOverview({ initialDevice }: { initialDevice: Device }) {
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [parameter, setParameter] = useState<Sensor["parameter"]>("temperature_c");
   const status = deviceStatus(live.device, live.now);
+  // Los medidores usan la misma recepción para que se vea qué sensores faltaban en ese envío.
   const latest = live.rows[0];
   const connected = status === "online" && live.connection === "En vivo";
   const assessments = sensors.map((sensor) => ({
@@ -97,6 +99,7 @@ function StationOverview({ initialDevice }: { initialDevice: Device }) {
   async function acknowledge(id: string) {
     setBusyId(id);
     setActionError("");
+    // La alerta se retira del panel después de la confirmación del servidor. En caso de error, queda disponible para reintentar.
     try { await live.acknowledge(id); }
     catch (error) { setActionError(error instanceof Error ? error.message : "No se pudo reconocer la alerta."); }
     finally { setBusyId(""); }

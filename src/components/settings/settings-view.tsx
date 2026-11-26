@@ -45,6 +45,7 @@ function StationSettings({ device }: { device: Device }) {
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
+    // Las reglas pertenecen a la estación seleccionada. Si la carga falla, se ocultan los formularios hasta recuperarlas.
     async function load() {
       setLoading(true); setLoadFailed(false);
       try {
@@ -61,6 +62,7 @@ function StationSettings({ device }: { device: Device }) {
   }
   async function saveRule(parameter: Parameter, form: FormData) {
     await save(async () => {
+      // Un campo vacío deja ese extremo del umbral abierto. Cero sigue siendo un límite numérico válido.
       const nullableNumber = (name: string) => String(form.get(name) ?? "").trim() === "" ? null : Number(form.get(name));
       const result = await api<AlertRule>("alert-rules", { method: "PUT", body: JSON.stringify({ device_id: device.id, parameter, min_value: nullableNumber("min"), max_value: nullableNumber("max"), enabled: form.get("enabled") === "on" }) });
       setRules((previous) => [...previous.filter((r) => r.parameter !== parameter), result]);

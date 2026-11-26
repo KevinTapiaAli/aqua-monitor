@@ -5,6 +5,7 @@ type ErrorEnvelope = { error?: { message?: string; details?: { field: string; me
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body) headers.set("Content-Type", "application/json");
+  // El plazo propio limita la espera. La señal del llamador permite cancelar al cambiar de vista o de filtro.
   const timeout = AbortSignal.timeout(20_000);
   const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
   let response: Response;
@@ -12,6 +13,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     response = await fetch("/api/v1/" + path, { ...init, cache: "no-store", credentials: "same-origin", headers, signal });
   } catch (error) {
     if (init?.signal?.aborted) throw error;
+    // Un timeout del cliente deja abierto el resultado de una escritura que el servidor pudo haber recibido.
     if (timeout.aborted) throw new Error("La solicitud tardó demasiado. Actualiza los datos antes de repetir una operación.");
     throw new Error("No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.");
   }

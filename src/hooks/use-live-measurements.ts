@@ -28,6 +28,7 @@ async function loadWindow(deviceId: string, end: number, signal: AbortSignal): P
     if (cursor) query.set("cursor", cursor);
   } while (cursor);
   if (rows.length) return rows;
+  // La última recepción sigue disponible para el medidor aunque haya quedado fuera de la ventana de la gráfica.
   const latest = await api<Measurement | null>(`measurements/latest?device_id=${deviceId}`, { signal });
   return latest ? [latest] : [];
 }
@@ -48,6 +49,7 @@ export function useLiveMeasurements(initialDevice: Device) {
     let generation = 0;
     let alertUpdates: Alert[] | null = null;
     async function sync() {
+      // Cancelar y versionar la sincronización evita que un intento anterior sobrescriba el estado recuperado al reconectar.
       syncRequest?.abort();
       const request = new AbortController();
       syncRequest = request;
@@ -72,6 +74,7 @@ export function useLiveMeasurements(initialDevice: Device) {
         const syncedAt = Date.now();
         setNow(syncedAt);
         setRows((previous) => mergeRows(history, previous, syncedAt));
+        // Los cambios Realtime que llegaron durante la consulta se aplican después de la respuesta para conservar el estado más reciente.
         const reconciled = new Map(pending.map((a) => [a.id, a]));
         for (const update of alertUpdates ?? []) {
           if (update.acknowledged_at) reconciled.delete(update.id);

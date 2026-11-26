@@ -34,6 +34,7 @@ function DeviceHistory({ deviceId }: { deviceId: string }) {
 
   useEffect(() => {
     const abort = new AbortController();
+    // La versión identifica el filtro vigente y permite descartar respuestas de páginas solicitadas con fechas anteriores.
     const version = ++pageVersion.current;
     pageAbort.current = abort;
     async function load() {
@@ -69,6 +70,7 @@ function DeviceHistory({ deviceId }: { deviceId: string }) {
     }
     setPeriod({ from: from.toISOString(), to: to.toISOString() });
   }
+  // La exportación recorre todas las páginas del periodo, aunque la tabla solo haya cargado las primeras filas.
   async function exportCsv() {
     const controller = new AbortController();
     exportAbort.current = controller;
