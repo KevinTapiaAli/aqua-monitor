@@ -19,6 +19,7 @@ function getDigitalState(row: Measurement): DigitalState | null {
   const value = item["value"];
   const unit = item["unit"];
 
+  // La unidad distingue el estado digital del ADC, donde cero y uno también pueden aparecer como cuentas válidas.
   if (unit !== "state") return null;
   return value === 0 || value === 1 ? value : null;
 }
@@ -30,6 +31,7 @@ export function LdrDigitalPanel({ rows }: { rows: Measurement[] }) {
       date: row.received_at,
       state: getDigitalState(row),
     }))
+    // Algunos firmwares omiten el campo digital. Los registros sin ese campo quedan fuera del recuento de estados.
     .filter(
       (item): item is typeof item & { state: DigitalState } =>
         item.state !== null

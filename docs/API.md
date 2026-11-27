@@ -25,20 +25,24 @@ Todas las respuestas usan `Cache-Control: private, no-store` (errores: `no-store
 | `GET /api/v1/measurements` | `device_id`, `from`, `to`, `limit`, `cursor` | Usuario asociado, RLS |
 | `GET /api/v1/measurements/latest` | `device_id` | Usuario asociado, RLS |
 | `GET /api/v1/devices` | — | Usuario; hasta 100 autorizados |
-| `POST /api/v1/devices` | `name`, `location`, `expected_interval_seconds` | Usuario; se convierte en propietario |
+| `POST /api/v1/devices` | `name`, `location`, `expected_interval_seconds` | Cuenta nueva o propietaria de una estación. Responde 403 a cuentas con acceso exclusivamente de observador. |
 | `PATCH /api/v1/devices/{id}` | Campos editables, `is_active`, `sensor_limits` | Propietario |
 | `GET /api/v1/devices/status` | `device_id` | Usuario asociado |
+| `GET /api/v1/devices/observers` | `device_id` | Administrador de la estación |
+| `POST /api/v1/devices/observers` | `device_id` y cuerpo con `user_id` del observador | Administrador de la estación |
+| `DELETE /api/v1/devices/observers` | `device_id` y cuerpo con `user_id` del observador | Administrador de la estación |
 | `POST /api/v1/devices/{id}/credentials` | — | Propietario; rota y revela nuevo token una vez |
 | `DELETE /api/v1/devices/{id}/credentials` | — | Propietario; revoca |
 | `GET /api/v1/alerts` | `device_id` | Usuario asociado; 50 pendientes más recientes |
 | `POST /api/v1/alerts/{id}/acknowledge` | — | Propietario |
-| `GET /api/v1/alert-rules` | `device_id` | Usuario asociado |
+| `GET /api/v1/alert-rules` | `device_id` | Propietario |
 | `PUT /api/v1/alert-rules` | `device_id`, `parameter`, `min_value`, `max_value`, `enabled` | Propietario |
-| `GET /api/v1/calibrations` | `device_id` | Usuario asociado; 100 más recientes |
+| `GET /api/v1/calibrations` | `device_id` | Propietario. Hasta las 100 más recientes. |
 | `POST /api/v1/calibrations` | Ver formulario Configuración | Propietario |
 | `PUT /api/v1/profile` | `display_name` | Usuario sobre su propio perfil |
+| `PUT /api/v1/privacy-details` | `responsible_name`, `contact_email`, `retention_months` | Cuenta con permiso de administración de privacidad |
 
-Las consultas sin permiso devuelven listas vacías o `data: null`; no revelan si un UUID ajeno existe. Las modificaciones no autorizadas se rechazan con 403/404 o el error controlado del proveedor. Los endpoints no aceptan `user_id` para suplantar la identidad.
+Las consultas sobre datos de una estación ajena devuelven listas vacías o `data: null`. La gestión de observadores exige permiso de administrador y responde 403 si falta. La sesión autenticada determina la identidad del solicitante.
 
 ## Contrato de ingesta
 

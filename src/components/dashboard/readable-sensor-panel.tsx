@@ -17,6 +17,7 @@ export function ReadableSensorPanel({ rows, parameter, connected, intervalSecond
   const light = parameter === "light_adc";
   const entries = useMemo(() => [...rows].sort((a, b) => Date.parse(a.received_at) - Date.parse(b.received_at) || a.id.localeCompare(b.id)).map(row => {
     const raw = sensorSample(row, parameter)?.value ?? null;
+    // La misma lectura original alimenta la interpretación elegida y la tabla de consulta.
     return { row, raw, time: Date.parse(row.received_at), value: light ? lightState(raw, maximum, threshold) : adcPercent(raw, maximum) };
   }), [rows, parameter, light, maximum, threshold]);
   const points = useMemo(() => entries.map(({ time, value }) => ({ time, value })), [entries]);
@@ -26,6 +27,7 @@ export function ReadableSensorPanel({ rows, parameter, connected, intervalSecond
   const end = useWindowTime(connected, last?.time);
   const windowEntries = entries.filter(entry => entry.time >= end - minutes * 60_000 && entry.time <= end);
   const values = windowEntries.flatMap(entry => entry.value === null ? [] : [entry.value]);
+  // Las bandas dividen la escala eléctrica en tercios para resumir la señal del MQ-135.
   const bands = [values.filter(v => v < 100 / 3).length, values.filter(v => v >= 100 / 3 && v < 200 / 3).length, values.filter(v => v >= 200 / 3).length];
   const state = value === null ? "Sin lectura disponible" : light ? (value === 1 ? "Con luz" : "Oscuro") : value < 100 / 3 ? "Señal baja" : value < 200 / 3 ? "Señal media" : "Señal alta";
   return <section className="panel space-y-5">

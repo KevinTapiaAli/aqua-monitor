@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const origin = new URL(process.env.APP_URL || url.origin).origin;
   const code = url.searchParams.get("code");
+  // Solo se aceptan dos destinos internos para impedir que el callback envíe a un usuario a una URL ajena.
   const next = url.searchParams.get("next") === "/reset-password" ? "/reset-password" : "/dashboard";
   const headers = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer" };
   if (hasPublicConfig() && code && code.length <= 2048) {
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
       if (!error) return NextResponse.redirect(new URL(next, origin), { headers });
     } catch { return NextResponse.redirect(new URL("/login?notice=unavailable", origin), { headers }); }
   }
+  // Conserva el flujo original para que un enlace vencido permita volver a solicitar el correo adecuado.
   const fallback = next === "/reset-password" ? "/forgot-password" : "/verify-email";
   return NextResponse.redirect(new URL(fallback + "?notice=invalid_link", origin), { headers });
 }

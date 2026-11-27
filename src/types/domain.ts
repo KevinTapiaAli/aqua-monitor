@@ -65,4 +65,5 @@ export type Calibration = {
   created_at: string;
 };
 export type Profile = { id: string; display_name: string; created_at: string };
+export type PrivacyDetails = { responsible_name: string; contact_email: string | null; retention_months: number | null };
 export type PageResult<T> = { items: T[]; next_cursor: string | null; limit: number };

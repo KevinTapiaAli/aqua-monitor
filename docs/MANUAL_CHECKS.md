@@ -33,7 +33,20 @@ Crea usuarios A y B y un dispositivo D propiedad de A. Con la sesión B, intenta
 - No puede invocar `ingest_measurement` ni insertar directamente en `measurements` o `alerts`.
 - No puede leer `private.device_credentials`, modificar `owner_id`, `last_received_at` o crear su propia asociación.
 
-Como administrador, agrega B a `device_users` de D con rol `viewer` para comprobar consulta y Realtime autorizados. Las mutaciones de propietario deben seguir rechazándose. Después retira esa asociación y repite las consultas. Esto verifica la autorización real, no solo los elementos visibles de la UI.
+Desde la cuenta A, selecciona D y concede acceso a B en **Configuración → Gestionar observadores** con el identificador del perfil de B. En sesiones separadas, comprueba lo siguiente:
+
+- A ve el modo Administrador. B ve el modo Observador para D y puede consultar Realtime, filtrar el historial y exportar CSV.
+- B ve **Mi perfil** y la etiqueta **Observador · solo lectura**. La navegación omite Dispositivos y, al abrir `/dashboard/devices` directamente, B no ve el formulario de registro ni controles de tokens.
+- B recibe 403 al llamar a la API de observadores para D. La RLS también impide que B cree o borre membresías de D desde Supabase.
+- B sigue sin poder cambiar configuración, crear o editar umbrales, rotar o revocar credenciales ni reconocer alertas de D. Las consultas de umbrales y calibraciones de D devuelven listas vacías.
+- Si B solo tiene membresías de observador, el registro de estaciones falla tanto en `POST /api/v1/devices` como en la RPC `register_device`. Una cuenta sin estaciones puede registrar la primera. Una cuenta que posee una estación y observa otra conserva sus permisos de propietario para su propia estación.
+- A puede repetir la concesión sin duplicar la membresía. Después de que A quita el acceso, B pierde acceso a nuevas consultas y eventos. D deja de aparecer al recargar.
+
+## Privacidad del proyecto
+
+- Abre `/privacy` sin iniciar sesión. Comprueba que aparecen los datos del responsable y el texto de cookies y solicitudes.
+- Con la cuenta designada para privacidad, guarda datos de prueba desde **Configuración → Privacidad del proyecto** y recarga la página pública. Comprueba que los tres campos se actualizaron.
+- Con un observador o un propietario que no tiene el permiso de privacidad, comprueba que el formulario no aparece y que `PUT /api/v1/privacy-details` devuelve 403.
 
 ## Ingesta (entorno separado de pruebas)
 
@@ -61,12 +74,13 @@ Para solicitudes web manuales de escritura, incluye la sesión y `Origin` igual 
 
 - Primer usuario sin dispositivos: estado vacío útil.
 - Dispositivo creado sin mediciones: “Sin transmisiones”, indicadores vacíos.
-- Primera lectura: tarjetas y cuatro gráficos con unidades correctas.
+- Primera lectura: indicadores para temperatura, luz y respuesta a gases, en °C y ADC. Comprueba las tres gráficas en escritorio y en móvil.
+- Con más de 500 recepciones en dos horas, confirma que la gráfica alcanza la parte anterior a la primera página. Comprueba que las pausas en la transmisión dejan un espacio y que el eje horario usa la hora de Bolivia.
 - Suspender envíos más de `max(30, 3 × intervalo)` segundos: “Desconectado”, sin presentar valores históricos como actuales.
 - Enviar una lectura pendiente antigua: hora de adquisición distinta de recepción y aviso de antigüedad.
 - Desconectar/reconectar Realtime: estado de reconexión y recuperación de la ventana sin duplicados; cambiar de dispositivo no mezcla series.
 - Error de sensor: tarjeta explícita, hueco en gráfico y evento; raw accesible en historial.
-- Confirmar que temperatura usa °C y los otros tres sensores ADC; los originales sin calibrar se ven en el dashboard y no se mezclan con estadísticas de lecturas válidas del historial.
+- Comprueba que las lecturas originales compatibles aparecen en el dashboard y que la calidad sigue visible en el historial.
 - Filtrar, cargar páginas y comparar fronteras: sin repeticiones ni pérdidas por empate de timestamp.
 - Estadísticas: coinciden con lecturas `ok` cargadas, no con un total de periodo no descargado.
 - CSV: columnas de calidad/raw, codificación UTF-8, fechas UTC; periodo grande informa límite y no descarga un archivo incompleto.

@@ -3,17 +3,29 @@ import { createContext, useContext, useState } from "react";
 import type { Device } from "@/types/domain";
 import { api } from "@/lib/api/client";
 
-type Context = { devices: Device[]; device: Device | undefined; selectedId: string; select: (id: string) => void; refresh: () => Promise<void>; userId: string };
+type Context = {
+  devices: Device[];
+  device: Device | undefined;
+  stationRole: "admin" | "observer" | null;
+  selectedId: string;
+  select: (id: string) => void;
+  refresh: () => Promise<void>;
+  userId: string;
+};
 const DeviceContext = createContext<Context | null>(null);
 export function DeviceProvider({ initialDevices, userId, children }: { initialDevices: Device[]; userId: string; children: React.ReactNode }) {
   const [devices, setDevices] = useState(initialDevices);
   const [selectedId, select] = useState(initialDevices[0]?.id ?? "");
+  const device = devices.find((entry) => entry.id === selectedId);
+  const stationRole = device ? (device.owner_id === userId ? "admin" : "observer") : null;
   async function refresh() {
     const data = await api<Device[]>("devices");
     setDevices(data);
+    // Si se revocó el acceso a la estación seleccionada, se vuelve a una estación disponible.
     select((current) => data.some((d) => d.id === current) ? current : data[0]?.id ?? "");
   }
-  return <DeviceContext.Provider value={{ devices, device: devices.find((d) => d.id === selectedId), selectedId, select, refresh, userId }}>{children}</DeviceContext.Provider>;
+  // La selección determina qué controles muestra la interfaz. El servidor verifica los permisos sobre cada estación.
+  return <DeviceContext.Provider value={{ devices, device, stationRole, selectedId, select, refresh, userId }}>{children}</DeviceContext.Provider>;
 }
 export function useDevices() {
   const value = useContext(DeviceContext);

@@ -8,6 +8,7 @@ export const requireSession = cache(async () => {
   if (!hasPublicConfig()) throw new ApiError(503, "NOT_CONFIGURED", "El acceso a cuentas todavía no está habilitado.");
   const supabase = await serverClient();
   let result: Awaited<ReturnType<typeof supabase.auth.getUser>>;
+  // Verificar el usuario en Auth permite distinguir una sesión inválida de un fallo de conectividad con el proveedor.
   try { result = await supabase.auth.getUser(); }
   catch { throw new ApiError(503, "AUTH_UNAVAILABLE", "No se pudo conectar con el servicio de acceso. Intenta nuevamente."); }
   const { data, error } = result;

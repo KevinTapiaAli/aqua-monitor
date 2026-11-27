@@ -1,4 +1,4 @@
-import type { Alert, AlertRule, Calibration, Device, Json, Measurement, Profile } from "./domain";
+import type { Alert, AlertRule, Calibration, Device, Json, Measurement, PrivacyDetails, Profile } from "./domain";
 
 // Contrato ambiental de la migración 202610190001. Regenerar con Supabase CLI cuando se autorice.
 type Table<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
@@ -11,6 +11,7 @@ export type Database = {
   public: {
     Tables: {
       profiles: Table<Profile>;
+      privacy_details: Table<PrivacyDetails & { id: boolean }, never, PrivacyDetails>;
       devices: Table<Device>;
       device_users: Table<{ device_id: string; user_id: string; role: "owner" | "viewer"; created_at: string }>;
       measurements: Table<Measurement, never, never>;

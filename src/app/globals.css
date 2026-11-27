@@ -41,4 +41,46 @@ input[aria-invalid="true"] { border-color: #be123c; }
 .badge-error { background: #fff1f2; color: #be123c; }
 .message { padding: .85rem 1rem; border-radius: .6rem; font-size: .875rem; background: #eaf6fa; color: #155e75; }
 .message-error { background: #fff1f2; color: #9f1239; }
+
+.monitor-shell { background: #10151d; color: #edf2f8; }
+.monitor-header { background: #171e28; color: #edf2f8; border-bottom: 1px solid #2e3948; }
+.monitor-nav-link, .monitor-action {
+  display: inline-flex; align-items: center; gap: .4rem; border-radius: .4rem;
+  padding: .45rem .65rem; color: #d4dfec; font-size: .8125rem; font-weight: 600;
+}
+.monitor-nav-link[aria-current="page"] { background: #27384b; color: #e9f4ff; }
+.monitor-nav-link:hover, .monitor-action:hover { background: #293746; color: #fff; }
+.monitor-action { border: 1px solid #46566a; }
+.monitor-shell select { background: #1a2533; border-color: #46566a; color: #edf2f8; }
+.monitor-shell .panel select, .monitor-shell .monitor-analysis select { background: white; border-color: #cbd5e1; color: #183344; }
+.monitor-role {
+  border: 1px solid #425d76; border-radius: 999px; padding: .26rem .7rem;
+  color: #d3e9ff; background: #253953; font-size: .75rem; font-weight: 700;
+}
+.monitor-card { background: #1a222d; border: 1px solid #303c4c; border-radius: .8rem; }
+.monitor-status {
+  display: flex; align-items: flex-start; gap: .65rem; border-radius: .48rem;
+  padding: .65rem .75rem; background: #332c23; color: #f5d693;
+}
+.monitor-status-ok { background: #21352d; color: #bce6cd; }
+.monitor-footer { border-top: 1px solid #303c4c; padding-top: 1rem; color: #a4b1c1; font-size: .75rem; }
+.monitor-gauge { position: relative; width: min(100%, 14rem); aspect-ratio: 2; }
+.monitor-gauge-arc {
+  position: absolute; inset: 0;
+  background: conic-gradient(from -90deg at 50% 100%, #4eab72 0deg var(--band-one), #efad3e var(--band-one) var(--band-two), #e06460 var(--band-two) 180deg, transparent 180deg);
+  mask-image: radial-gradient(circle farthest-side at 50% 100%, transparent 72%, #000 73%);
+}
+.monitor-gauge-needle {
+  position: absolute; bottom: 0; left: calc(50% - 4px); width: 8px; height: 94%;
+  transform: rotate(var(--needle-angle)); transform-origin: bottom center;
+}
+.monitor-gauge-needle::before {
+  content: ""; display: block; width: 8px; height: 14px;
+  background: #f1f6fc; border: 1px solid #10151d; border-radius: 80% 80% 55% 55%;
+}
+.monitor-gauge-value {
+  position: absolute; inset: auto 0 0; text-align: center; line-height: 1;
+  font-size: clamp(1.3rem, 3vw, 2.05rem); font-weight: 600;
+}
+.monitor-gauge-value span { font-size: .66em; font-weight: 500; color: #d8e3ef; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; } }

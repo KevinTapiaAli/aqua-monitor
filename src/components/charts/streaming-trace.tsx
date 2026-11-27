@@ -24,6 +24,7 @@ export function StreamingTrace({ points, color, unit, decimals, duration, interv
       const now = Date.now();
       const live = connected && latest !== undefined && now - latest.time <= gapLimit;
       const anchor = latest?.time ?? now;
+      // El eje avanza mientras llegan muestras. Durante una desconexión conserva el tramo que ya se podía consultar.
       const end = live ? Math.max(now, anchor) : Math.max(endRef.current, anchor);
       if (latest) endRef.current = end;
       const start = end - duration;
@@ -79,6 +80,7 @@ export function StreamingTrace({ points, color, unit, decimals, duration, interv
       ctx.restore();
       if (!values.length) { ctx.fillStyle = "#64748b"; ctx.textAlign = "center"; ctx.fillText("Sin lecturas en esta ventana", left + plotWidth / 2, height / 2); }
     };
+    // Se limita la frecuencia de redibujo y se deja de animar si la pestaña está oculta o la última muestra pierde vigencia.
     const animate = (timestamp: number) => {
       if (timestamp - previousFrame >= (reduced.matches ? 1000 : 1000 / 30)) { draw(); previousFrame = timestamp; }
       if (!document.hidden && connected && latest && Date.now() - latest.time <= gapLimit) frame = requestAnimationFrame(animate);
